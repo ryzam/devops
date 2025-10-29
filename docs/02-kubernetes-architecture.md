@@ -2,6 +2,59 @@
 
 Kubernetes follows a master-worker architecture where the control plane (master) manages the cluster state and worker nodes run the actual applications. This distributed system provides high availability, scalability, and automated management of containerized workloads.
 
+## Architecture Overview
+
+```mermaid
+graph TB
+    subgraph "Control Plane (Master)"
+        API[API Server<br/>Central Management]
+        CM[Controller Manager<br/>Control Loops]
+        SCH[Scheduler<br/>Pod Placement]
+        ETCD[(etcd<br/>Cluster State Store)]
+    end
+
+    subgraph "Worker Nodes"
+        KUBELET[kubelet<br/>Node Agent]
+        PROXY[kube-proxy<br/>Network Proxy]
+        CR[Container Runtime<br/>Docker/K3s]
+        PODS[Pods<br/>Application Containers]
+    end
+
+    subgraph "Key Concepts"
+        DEP[Deployments<br/>Replica Management]
+        SVC[Services<br/>Network Abstraction]
+        ING[Ingress<br/>External Access]
+        PV[Persistent Volumes<br/>Storage]
+    end
+
+    API --> CM
+    API --> SCH
+    API --> ETCD
+    CM --> ETCD
+    SCH --> ETCD
+
+    API --> KUBELET
+    KUBELET --> PODS
+    KUBELET --> CR
+    KUBELET --> PROXY
+
+    DEP --> PODS
+    SVC --> PODS
+    ING --> SVC
+    PODS --> PV
+```
+
+### Core Components at a Glance
+
+- **Control Plane**: Manages cluster state and makes scheduling decisions
+- **Worker Nodes**: Run application containers and handle networking
+- **API Server**: RESTful interface for cluster management
+- **etcd**: Distributed key-value store for cluster data
+- **Scheduler**: Assigns pods to nodes based on resource requirements
+- **Controller Manager**: Runs control loops to maintain desired state
+- **kubelet**: Node agent that manages pod lifecycle
+- **kube-proxy**: Handles network rules and load balancing
+
 ## Control Plane (Master Node) Components
 
 The control plane is the brain of the Kubernetes cluster, responsible for making global decisions about the cluster and detecting/responding to cluster events.

@@ -34,6 +34,7 @@ Container orchestration automates the deployment, scaling, networking, and lifec
 6. **Rolling Updates:** Updates applications without downtime
 7. **Resource Management:** Efficiently allocates CPU, memory, and storage
 
+
 ## Why Kubernetes? The Industry Standard
 
 ### Market Adoption and Ecosystem
