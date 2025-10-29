@@ -32,7 +32,7 @@ K3d is a lightweight wrapper to run K3s (a certified Kubernetes distribution) in
 1.  **Create a cluster:** To create a new cluster, run the following command:
 
     ```bash
-    k3d cluster create mycluster
+   k3d cluster create mycluster --agents 2 --port "8080:80@loadbalancer" --port "8443:443@loadbalancer"
     ```
 
     This creates a single-node cluster with K3s. The cluster will be available immediately.
