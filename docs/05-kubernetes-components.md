@@ -116,6 +116,43 @@ A Deployment provides declarative updates for Pods and ReplicaSets. It describes
 - **Scaling**: Change number of replicas
 - **Pause/Resume**: Control update process
 
+**Understanding `kubectl get deployments` Output:**
+
+When you run `kubectl get deployments`, you'll see output like this:
+
+```
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-deployment   3/3     3            3           2m
+```
+
+**Column Explanations:**
+- **NAME**: The name of the deployment
+- **READY**: Shows `current/desired` replicas (e.g., 3/3 means 3 out of 3 desired pods are ready)
+- **UP-TO-DATE**: Number of replicas that have been updated to the latest pod spec
+- **AVAILABLE**: Number of replicas available to users (ready and able to serve traffic)
+- **AGE**: How long ago the deployment was created
+
+**Example Scenarios:**
+- `3/3  3  3  2m`: Perfect state - all desired pods are ready, up-to-date, and available
+- `2/3  3  2  2m`: Rolling update in progress - 3 pods updated but only 2 are ready yet
+- `3/3  0  3  2m`: Deployment created but pods not updated (paused deployment)
+- `1/3  1  1  2m`: Only 1 pod ready, likely due to resource constraints or failures
+
+**Deployment Status Details:**
+
+For more detailed information, use `kubectl describe deployment <name>`:
+
+```bash
+kubectl describe deployment nginx-deployment
+```
+
+This shows:
+- **Replicas**: Desired, current, ready, available, and unavailable counts
+- **Strategy**: Rolling update configuration (max unavailable, max surge)
+- **Conditions**: Status conditions like Available, Progressing, ReplicaFailure
+- **Events**: Timeline of deployment events and status changes
+- **Pod Template**: The pod specification being deployed
+
 ### ConfigMaps and Secrets: Configuration Management
 
 **ConfigMaps** store non-confidential configuration data in key-value pairs that can be consumed by pods.
