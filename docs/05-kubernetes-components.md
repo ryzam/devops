@@ -705,6 +705,399 @@ spec:
               number: 80
 ```
 
+### Horizontal Pod Autoscaler (HPA)
+
+Horizontal Pod Autoscaler automatically scales the number of pods in a deployment, replica set, or stateful set based on observed CPU utilization or other custom metrics.
+
+**HPA Components:**
+- **Metrics Collection**: Monitors resource usage (CPU, memory, custom metrics)
+- **Threshold Comparison**: Compares current usage against target thresholds
+- **Scaling Decision**: Calculates required number of replicas
+- **Pod Creation/Termination**: Scales deployment up or down accordingly
+
+**Scaling Algorithm:**
+```
+desiredReplicas = ceil[currentReplicas * (currentMetricValue / desiredMetricValue)]
+```
+
+**HPA Architecture:**
+
+```mermaid
+graph TB
+    subgraph "Metrics Sources"
+        METRICS[Metrics Server<br/>Resource Metrics]
+        CUSTOM[Custom Metrics<br/>Prometheus Adapter]
+        EXTERNAL[External Metrics<br/>Cloud Monitoring]
+    end
+
+    subgraph "Horizontal Pod Autoscaler"
+        HPA[HPA Controller<br/>autoscaling/v2]
+        TARGET[Target Resource<br/>Deployment/StatefulSet]
+    end
+
+    subgraph "Scaling Actions"
+        SCALE_UP[Scale Up<br/>Create Pods]
+        SCALE_DOWN[Scale Down<br/>Terminate Pods]
+    end
+
+    METRICS --> HPA
+    CUSTOM --> HPA
+    EXTERNAL --> HPA
+
+    HPA --> TARGET
+    TARGET --> SCALE_UP
+    TARGET --> SCALE_DOWN
+
+    SCALE_UP -.->|"More Pods"| TARGET
+    SCALE_DOWN -.->|"Fewer Pods"| TARGET
+```
+
+**Example Scaling Scenario:**
+
+```mermaid
+sequenceDiagram
+    participant APP as Application Pods
+    participant METRICS as Metrics Server
+    participant HPA as HPA Controller
+    participant DEPLOY as Deployment
+
+    APP->>METRICS: High CPU usage (80%)
+    METRICS->>HPA: Report metrics
+    HPA->>HPA: Check threshold (target: 50%)
+    HPA->>DEPLOY: Scale from 3 to 6 replicas
+    DEPLOY->>DEPLOY: Create 3 new pods
+    APP->>METRICS: CPU usage drops (35%)
+    METRICS->>HPA: Report metrics
+    HPA->>HPA: Check threshold (target: 50%)
+    HPA->>DEPLOY: Scale from 6 to 4 replicas
+    DEPLOY->>DEPLOY: Terminate 2 pods
+```
+
+**HPA Configuration Example:**
+
+```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: nginx-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nginx-deployment
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 70
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 60
+```
+
+**Key HPA Parameters:**
+
+- **minReplicas**: Minimum number of pods (default: 1)
+- **maxReplicas**: Maximum number of pods (required)
+- **targetCPUUtilizationPercentage**: Target CPU usage percentage
+- **stabilizationWindowSeconds**: Prevents thrashing during scaling
+
+**Scaling Behaviors:**
+
+1. **Scale Up**: Fast scaling when demand increases
+   - Stabilization window: 60 seconds (default)
+   - Can scale to 100% of current replicas per minute
+
+2. **Scale Down**: Conservative scaling to prevent thrashing
+   - Stabilization window: 300 seconds (default)
+   - Limited to 50% reduction per minute
+
+**Advanced HPA Features:**
+
+1. **Multiple Metrics:**
+```yaml
+metrics:
+- type: Resource
+  resource:
+    name: cpu
+    target:
+      type: Utilization
+      averageUtilization: 50
+- type: Pods
+  pods:
+    metric:
+      name: packets-per-second
+    target:
+      type: AverageValue
+      averageValue: 1000
+```
+
+2. **Custom Metrics:**
+```yaml
+metrics:
+- type: Object
+  object:
+    metric:
+      name: requests-per-second
+    describedObject:
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      name: main-ingress
+    target:
+      type: Value
+      value: 100
+```
+
+# How Horizontal Scaling Works in Kubernetes
+
+Horizontal scaling means **adding or removing pod replicas** to handle varying load. Here's how it works:
+
+## Manual Scaling
+
+Scale your deployment directly:
+
+```bash
+# Scale to 5 replicas
+kubectl scale deployment nginx-deployment --replicas=5
+
+# Or edit the deployment
+kubectl edit deployment nginx-deployment
+```
+
+In YAML:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  replicas: 5  # Number of pods
+```
+
+## Automatic Scaling (HPA - Horizontal Pod Autoscaler)
+
+HPA automatically adjusts replicas based on metrics like CPU, memory, or custom metrics.
+
+### Basic Example (CPU-based):
+
+```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: nginx-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nginx-deployment
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50  # Target 50% CPU
+```
+
+Or via kubectl:
+```bash
+kubectl autoscale deployment nginx-deployment --cpu-percent=50 --min=2 --max=10
+```
+
+## How HPA Works
+
+```
+1. Metrics Server collects resource usage every 15 seconds
+2. HPA checks metrics every 30 seconds (default)
+3. If average CPU > 50%, HPA increases replicas
+4. If average CPU < 50%, HPA decreases replicas
+5. Changes are gradual to avoid thrashing
+```
+
+### Decision Flow:
+```
+Current CPU: 80% (target: 50%)
+Current replicas: 3
+
+Desired replicas = ceil(3 × (80/50)) = ceil(4.8) = 5
+
+HPA scales deployment to 5 replicas
+```
+
+## Load Balancing with Scaling
+
+When you have multiple replicas, Kubernetes Service automatically load balances:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-deployment
+spec:
+  selector:
+    app: nginx
+  ports:
+  - port: 80
+```
+
+Traffic flow:
+```
+Request → Service (10.43.73.144:80)
+           ↓ (round-robin by default)
+    ┌──────┼──────┬──────┐
+    ↓      ↓      ↓      ↓
+  Pod-1  Pod-2  Pod-3  Pod-4
+```
+
+## Prerequisites for HPA
+
+1. **Metrics Server must be installed**:
+```bash
+# Check if installed
+kubectl top nodes
+
+# Install if needed (for k3d, usually pre-installed)
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+```
+
+2. **Resource requests must be defined**:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  template:
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+        resources:
+          requests:
+            cpu: 100m      # Required for CPU-based HPA
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+```
+
+## Monitoring HPA
+
+```bash
+# View HPA status
+kubectl get hpa
+
+# Watch scaling in real-time
+kubectl get hpa -w
+
+# Detailed info
+kubectl describe hpa nginx-hpa
+```
+
+Example output:
+```
+NAME        REFERENCE                  TARGETS   MINPODS   MAXPODS   REPLICAS
+nginx-hpa   Deployment/nginx-deployment   45%/50%   2         10        3
+```
+
+## Scaling Events
+
+```bash
+# View scaling events
+kubectl describe hpa nginx-hpa
+```
+
+You'll see events like:
+```
+Events:
+  Type    Reason             Message
+  ----    ------             -------
+  Normal  SuccessfulRescale  New size: 5; reason: cpu resource utilization above target
+  Normal  SuccessfulRescale  New size: 3; reason: All metrics below target
+```
+
+## Advanced: Custom Metrics
+
+Scale based on requests per second, queue length, etc:
+
+```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: nginx-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nginx-deployment
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Pods
+    pods:
+      metric:
+        name: http_requests_per_second
+      target:
+        type: AverageValue
+        averageValue: "1000"
+```
+
+(Requires Prometheus or similar metrics adapter)
+
+## Key Concepts
+
+- **Horizontal** = more pods (scale out/in)
+- **Vertical** = bigger pods (scale up/down) - different mechanism (VPA)
+- HPA prevents overload and saves resources
+- Scaling decisions have cooldown periods (default: 3 min scale-down, 30s scale-up)
+- Works with Deployments, ReplicaSets, StatefulSets
+
+Would you like to set up HPA for your nginx deployment?
+
+**HPA Best Practices:**
+
+1. **Resource Requests**: Set appropriate CPU/memory requests for accurate scaling
+2. **Monitoring**: Monitor HPA events and scaling decisions
+3. **Cooldown Periods**: Configure stabilization windows to prevent thrashing
+4. **Limits**: Set reasonable min/max replica bounds
+5. **Metrics**: Use multiple metrics for better scaling decisions
+
+**Troubleshooting HPA:**
+
+```bash
+# Check HPA status
+kubectl get hpa
+kubectl describe hpa nginx-hpa
+
+# Check metrics availability
+kubectl get --raw "/apis/metrics.k8s.io/v1beta1/pods" | jq .
+
+# View scaling events
+kubectl get events --field-selector reason=SuccessfulRescale,FailedRescale
+```
+
 ### Custom Resource Definitions (CRDs)
 
 CRDs allow you to extend Kubernetes API with your own resource types.
