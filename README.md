@@ -28,18 +28,14 @@ Before starting, ensure you have the required tools installed. See [Prerequisite
 
 ### Getting Started
 - [Setting up a Local Environment with K3d](docs/04-local-setup-k3d.md) - Local cluster setup with K3d
-- [Using Rancher for Cluster Management](docs/04-rancher-management.md) - Rancher UI and multi-cluster management
+- [Kubernetes Components](docs/05-kubernetes-components.md) - Detailed component explanations
+- [Kubernetes Administration & Security](docs/06-kubernetes-administration-security.md) - RBAC, network policies, and security best practices
+- [Using Rancher for Cluster Management](docs/07-rancher-management.md) - Rancher UI and multi-cluster management
 
 ### Advanced Topics
-- [High-Availability K8s Cluster with RKE2](docs/05-ha-cluster-rke2.md) - Production HA cluster with RKE2
-- [Load Balancing with MetalLB](docs/06-loadbalancing-metallb.md) - Bare-metal load balancing
-- [Securing Applications with a WAF](docs/07-waf-security.md) - Web Application Firewall setup
-
-### Core Concepts
-- [Kubernetes Components](docs/08-kubernetes-components.md) - Detailed component explanations
-
-### Administration & Security
-- [Kubernetes Administration & Security](docs/09-kubernetes-administration-security.md) - RBAC, network policies, and security best practices
+- [High-Availability K8s Cluster with RKE2](docs/08-ha-cluster-rke2.md) - Production HA cluster with RKE2
+- [Load Balancing with MetalLB](docs/09-loadbalancing-metallb.md) - Bare-metal load balancing
+- [Securing Applications with a WAF](docs/10-waf-security.md) - Web Application Firewall setup
 
 ### DevOps & GitOps
 - [DevOps with Kubernetes and ArgoCD](docs/11-devops-kubernetes-argocd.md) - DevOps methodology, GitOps practices, and ArgoCD implementation
