@@ -95,7 +95,7 @@ K3d is a lightweight wrapper to run K3s (a certified Kubernetes distribution) in
     ```
 
     ### Use Ingress
-    ```bash
+    ```yaml
     apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
