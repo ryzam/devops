@@ -95,25 +95,26 @@ K3d is a lightweight wrapper to run K3s (a certified Kubernetes distribution) in
     ```
 
     ### Use Ingress
+    
     ```yaml
     apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: nginx-ingress
-  annotations:
-    ingress.kubernetes.io/ssl-redirect: "false"
-spec:
-  rules:
-  - http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: nginx-deployment
-            port:
-              number: 80
-```
+    kind: Ingress
+    metadata:
+      name: nginx-ingress
+      annotations:
+        ingress.kubernetes.io/ssl-redirect: "false"
+    spec:
+      rules:
+      - http:
+          paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx-deployment
+                port:
+                  number: 80
+    ```
 
 5.  **Access the application:** To access the application, you will need to get the port that the service is running on. Run the following command to get the port:
 
