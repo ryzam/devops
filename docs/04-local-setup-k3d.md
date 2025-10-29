@@ -35,7 +35,7 @@ K3d is a lightweight wrapper to run K3s (a certified Kubernetes distribution) in
    k3d cluster create mycluster --agents 2 --port "8080:80@loadbalancer" --port "8443:443@loadbalancer"
    ```
 
-    This creates a single-node cluster with K3s. The cluster will be available immediately.
+    This creates one master node and with 2 worker agents cluster with K3s. The cluster will be available immediately.
 
 2.  **Verify cluster:** Check that the cluster is running and kubectl is configured:
 
