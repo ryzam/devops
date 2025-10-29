@@ -101,10 +101,171 @@ A Pod is the smallest and most basic deployable object in Kubernetes. It represe
 A Service is an abstraction that defines a logical set of pods and a policy by which to access them. Services enable loose coupling between dependent pods and provide a stable endpoint for accessing applications.
 
 **Service Types:**
-- **ClusterIP**: Default type, exposes service on internal cluster IP
-- **NodePort**: Exposes service on each node's IP at a static port
-- **LoadBalancer**: Creates an external load balancer (requires cloud provider)
-- **ExternalName**: Maps service to external DNS name
+
+#### 1. ClusterIP (Default)
+The default service type that exposes the service on an internal IP within the cluster.
+
+**Use Case:** Internal communication between services within the cluster.
+
+```mermaid
+graph LR
+    subgraph "Kubernetes Cluster"
+        POD1[Pod A<br/>app: web]
+        POD2[Pod B<br/>app: web]
+        POD3[Pod C<br/>app: web]
+        SVC[Service<br/>Type: ClusterIP<br/>IP: 10.43.0.1]
+        CLIENT[Internal Client<br/>Pod/Service]
+    end
+
+    CLIENT --> SVC
+    SVC --> POD1
+    SVC --> POD2
+    SVC --> POD3
+```
+
+**Example:**
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  selector:
+    app: my-app
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: ClusterIP  # Default
+```
+
+**Access:** Only accessible within the cluster via `my-service:80` or `10.43.0.1:80`
+
+#### 2. NodePort
+Exposes the service on each node's IP at a static port (range: 30000-32767).
+
+**Use Case:** External access to services, development environments, or when LoadBalancer is not available.
+
+```mermaid
+graph LR
+    subgraph "Kubernetes Cluster"
+        NODE1[Node 1<br/>IP: 192.168.1.10]
+        NODE2[Node 2<br/>IP: 192.168.1.11]
+        POD1[Pod A<br/>app: web]
+        POD2[Pod B<br/>app: web]
+        SVC[Service<br/>Type: NodePort<br/>Port: 30080]
+    end
+
+    subgraph "External"
+        CLIENT[External Client]
+    end
+
+    CLIENT --> NODE1
+    CLIENT --> NODE2
+    NODE1 --> SVC
+    NODE2 --> SVC
+    SVC --> POD1
+    SVC --> POD2
+```
+
+**Example:**
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  selector:
+    app: my-app
+  ports:
+  - port: 80
+    targetPort: 8080
+    nodePort: 30080  # Optional: specify port, otherwise auto-assigned
+  type: NodePort
+```
+
+**Access:** Via any node IP and the NodePort: `http://192.168.1.10:30080`
+
+#### 3. LoadBalancer
+Creates an external load balancer in supported cloud environments (AWS ELB, GCP LoadBalancer, Azure LB).
+
+**Use Case:** Production applications requiring external load balancing and SSL termination.
+
+```mermaid
+graph LR
+    subgraph "Cloud Provider"
+        LB[Load Balancer<br/>External IP: 203.0.113.1]
+    end
+
+    subgraph "Kubernetes Cluster"
+        NODE1[Node 1]
+        NODE2[Node 2]
+        POD1[Pod A<br/>app: web]
+        POD2[Pod B<br/>app: web]
+        SVC[Service<br/>Type: LoadBalancer]
+    end
+
+    subgraph "External"
+        CLIENT[External Client]
+    end
+
+    CLIENT --> LB
+    LB --> NODE1
+    LB --> NODE2
+    NODE1 --> SVC
+    NODE2 --> SVC
+    SVC --> POD1
+    SVC --> POD2
+```
+
+**Example:**
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  selector:
+    app: my-app
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: LoadBalancer
+```
+
+**Access:** Via the load balancer's external IP (automatically assigned by cloud provider)
+
+#### 4. ExternalName
+Maps a service to an external DNS name without creating endpoints.
+
+**Use Case:** Accessing external services or legacy systems via DNS names.
+
+```mermaid
+graph LR
+    subgraph "Kubernetes Cluster"
+        POD[Pod<br/>app: client]
+        SVC[Service<br/>Type: ExternalName<br/>externalName: api.external.com]
+    end
+
+    subgraph "External"
+        EXT[External Service<br/>api.external.com]
+    end
+
+    POD --> SVC
+    SVC -.->|"DNS Resolution"| EXT
+```
+
+**Example:**
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: external-api
+spec:
+  type: ExternalName
+  externalName: api.external-service.com
+```
+
+**Access:** Pods access via `external-api` which resolves to `api.external-service.com`
 
 ### Deployments: Declarative Updates
 
@@ -368,6 +529,181 @@ kubectl exec storage-pod -- cat /data/hello.txt
 ```
 
 ## Advanced Topics
+
+### Ingress: External Access and Routing
+
+Ingress is an API object that manages external access to services in a cluster, typically HTTP/HTTPS traffic. It provides load balancing, SSL termination, and name-based virtual hosting.
+
+**Key Features:**
+- **HTTP/HTTPS Routing**: Route traffic based on host and path
+- **SSL/TLS Termination**: Handle SSL certificates and encryption
+- **Load Balancing**: Distribute traffic across multiple pods
+- **Name-based Virtual Hosting**: Multiple domains on single IP
+
+#### NGINX Ingress Controller Architecture
+
+The NGINX Ingress Controller is a popular implementation that uses NGINX as the underlying load balancer.
+
+**Components:**
+- **Ingress Controller**: Watches for Ingress resources and configures NGINX
+- **NGINX**: High-performance web server and reverse proxy
+- **ConfigMap**: Controller configuration
+- **Service Account**: RBAC permissions
+
+**Request Flow Diagram:**
+
+```mermaid
+sequenceDiagram
+    participant Browser
+    participant DNS
+    participant LB as Load Balancer (Optional)
+    participant IC as Ingress Controller (NGINX)
+    participant SVC as Service
+    participant POD1 as Pod 1
+    participant POD2 as Pod 2
+
+    Browser->>DNS: Resolve myapp.example.com
+    DNS-->>Browser: Returns IP (Load Balancer or Node)
+    Browser->>LB: HTTPS Request to myapp.example.com
+    LB->>IC: Forward request to Ingress Controller
+    IC->>IC: Match Ingress rules (host + path)
+    IC->>SVC: Route to appropriate Service
+    SVC->>POD1: Load balance to Pod 1
+    alt Pod 2 available
+        SVC->>POD2: Or load balance to Pod 2
+    end
+    POD1-->>IC: Response
+    IC-->>Browser: HTTPS Response
+```
+
+**Detailed Flow Explanation:**
+
+1. **DNS Resolution**: Browser resolves domain name to IP address
+2. **Load Balancer (Optional)**: External load balancer routes traffic to cluster
+3. **Ingress Controller**: NGINX receives request and examines headers
+4. **Rule Matching**: Controller matches host (`myapp.example.com`) and path (`/api`)
+5. **Service Routing**: Routes to appropriate Kubernetes service
+6. **Load Balancing**: Service distributes traffic across healthy pods
+7. **Pod Processing**: Application pod processes the request
+8. **Response**: Response flows back through the same path
+
+**Example Ingress Configuration:**
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: myapp-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - myapp.example.com
+    secretName: myapp-tls
+  rules:
+  - host: myapp.example.com
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: api-service
+            port:
+              number: 80
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: web-service
+            port:
+              number: 80
+```
+
+**NGINX Ingress Controller Installation:**
+
+```bash
+# Add Helm repository
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+
+# Install NGINX Ingress Controller
+helm install nginx-ingress ingress-nginx/ingress-nginx \
+  --set controller.replicaCount=2 \
+  --set controller.nodeSelector."kubernetes\.io/os"=linux \
+  --set defaultBackend.replicaCount=1
+
+# Get the external IP
+kubectl get svc nginx-ingress-ingress-nginx-controller
+```
+
+**Common Ingress Patterns:**
+
+1. **Simple Routing:**
+```yaml
+spec:
+  rules:
+  - host: myapp.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend
+            port:
+              number: 80
+```
+
+2. **Path-based Routing:**
+```yaml
+spec:
+  rules:
+  - host: api.myapp.com
+    http:
+      paths:
+      - path: /v1
+        pathType: Prefix
+        backend:
+          service:
+            name: api-v1
+            port:
+              number: 80
+      - path: /v2
+        pathType: Prefix
+        backend:
+          service:
+            name: api-v2
+            port:
+              number: 80
+```
+
+3. **Multiple Domains:**
+```yaml
+spec:
+  rules:
+  - host: frontend.myapp.com
+    http:
+      paths:
+      - path: /
+        backend:
+          service:
+            name: frontend
+            port:
+              number: 80
+  - host: api.myapp.com
+    http:
+      paths:
+      - path: /
+        backend:
+          service:
+            name: api
+            port:
+              number: 80
+```
 
 ### Custom Resource Definitions (CRDs)
 
