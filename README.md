@@ -27,7 +27,7 @@ Before starting, ensure you have the required tools installed. See [Prerequisite
 - [Kubernetes Architecture](docs/02-kubernetes-architecture.md) - Master-worker architecture and components
 
 ### Getting Started
-- [Setting up a Local Environment with KIND](docs/03-local-setup-kind.md) - Local cluster setup with KIND
+- [Setting up a Local Environment with K3d](docs/04-local-setup-k3d.md) - Local cluster setup with K3d
 - [Using Rancher for Cluster Management](docs/04-rancher-management.md) - Rancher UI and multi-cluster management
 
 ### Advanced Topics
