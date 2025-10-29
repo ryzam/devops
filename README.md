@@ -1,6 +1,6 @@
-# Complete Kubernetes Tutorial
+# Complete Kubernetes DevOps Tutorial
 
-This comprehensive Kubernetes training tutorial covers everything from containerization fundamentals to advanced production deployments. Whether you're new to Kubernetes or looking to deepen your expertise, this guide provides hands-on exercises, detailed explanations, and production-ready configurations.
+This comprehensive Kubernetes DevOps training tutorial covers everything from containerization fundamentals to advanced production deployments. Whether you're new to Kubernetes or looking to deepen your expertise, this guide provides hands-on exercises, detailed explanations, and production-ready configurations.
 
 ## What You'll Learn
 
