@@ -32,7 +32,7 @@ K3d is a lightweight wrapper to run K3s (a certified Kubernetes distribution) in
 1.  **Create a cluster:** To create a new cluster, run the following command:
 
    ```bash
-   k3d cluster create mycluster --agents 2 --port "8080:80@loadbalancer" --port "8443:443@loadbalancer"
+   k3d cluster create mycluster --port "8080:80@loadbalancer" --port "8443:443@loadbalancer"
    ```
 
     This creates one master node and with 2 worker agents cluster with K3s. The cluster will be available immediately.
@@ -91,7 +91,7 @@ K3d is a lightweight wrapper to run K3s (a certified Kubernetes distribution) in
 4.  **Expose the deployment:** To expose the deployment, run the following command:
 
     ```bash
-    kubectl expose deployment nginx-deployment --port=80 --type=LoadBalancer
+    kubectl expose deployment nginx-deployment --port=80 --type=ClusterIP
     ```
 
     ### Use Ingress
