@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: task-manager-config
+  labels:
+    app: task-manager
+data:
+  # Application configuration
+  NODE_ENV: "production"
+  LOG_LEVEL: "info"
+  
+  # MongoDB connection (non-sensitive)
+  MONGO_DB_NAME: "taskmanager"
+  MONGO_HOST: "mongodb-service"
+  MONGO_PORT: "27017"
+  
+  # Application settings
+  MAX_TASKS_PER_USER: "100"
+  ENABLE_ANALYTICS: "true"

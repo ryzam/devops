@@ -2,6 +2,13 @@
 
 This comprehensive Kubernetes DevOps training tutorial covers everything from containerization fundamentals to advanced production deployments. Whether you're new to Kubernetes or looking to deepen your expertise, this guide provides hands-on exercises, detailed explanations, and production-ready configurations.
 
+## 🎯 Quick Start
+
+**New to Kubernetes?** Start here:
+1. 📊 [Introduction Presentation](docs/00-introduction-presentation.md) - Interactive presentation for newcomers
+2. 🔨 [Hands-On Workshop](docs/workshop/) - Practical exercises with ASP.NET Core and Node.js
+3. 📚 Follow the learning path below
+
 ## What You'll Learn
 
 - **Containerization Basics**: Understanding Docker and why containers matter
@@ -10,6 +17,7 @@ This comprehensive Kubernetes DevOps training tutorial covers everything from co
 - **Production Deployments**: High-availability clusters with RKE2
 - **Networking & Load Balancing**: MetalLB for bare-metal environments
 - **Security**: Web Application Firewall setup and best practices
+- **DevOps & GitOps**: Modern deployment practices with ArgoCD
 - **Hands-on Exercises**: Practical examples throughout each topic
 
 ## Prerequisites
@@ -18,13 +26,20 @@ Before starting, ensure you have the required tools installed. See [Prerequisite
 
 ## Table of Contents
 
-### Prerequisites
+### 🎓 Getting Started (New!)
+- [Introduction Presentation](docs/00-introduction-presentation.md) - Complete presentation for DevOps newcomers with real-world case studies
+- [Hands-On Workshop](docs/workshop/) - Interactive workshop exercises
+  - [Workshop Overview](docs/workshop/README.md) - Workshop structure and setup
+  - [Exercise 1: ASP.NET Core API](docs/workshop/aspnet-core/) - Deploy .NET microservice to Kubernetes
+  - [Exercise 2: Node.js Web App](docs/workshop/nodejs/) - Full-stack app with MongoDB
+
+### 📋 Prerequisites
 - [Prerequisites and Installation](docs/00-prerequisites.md) - Required tools and setup
 
-### Introduction
+### 📖 Fundamentals
 - [Why Containerize?](docs/01-why-containerize.md) - Containerization advantages and Docker basics
-- [Why Kubernetes? Container Orchestration](docs/03-why-kubernetes-orchestration.md) - Real-world orchestration benefits and use cases
 - [Kubernetes Architecture](docs/02-kubernetes-architecture.md) - Master-worker architecture and components
+- [Why Kubernetes? Container Orchestration](docs/03-why-kubernetes-orchestration.md) - Real-world orchestration benefits and use cases
 
 ### Getting Started
 - [Setting up a Local Environment with K3d](docs/04-local-setup-k3d.md) - Local cluster setup with K3d
@@ -40,15 +55,28 @@ Before starting, ensure you have the required tools installed. See [Prerequisite
 ### DevOps & GitOps
 - [DevOps with Kubernetes and ArgoCD](docs/11-devops-kubernetes-argocd.md) - DevOps methodology, GitOps practices, and ArgoCD implementation
 
-## Getting Started
+## 🚀 Learning Paths
 
-1. **Install Prerequisites**: Follow the [prerequisites guide](docs/00-prerequisites.md)
-2. **Start with Basics**: Read [Why Containerize?](docs/01-why-containerize.md) and [Kubernetes Architecture](docs/02-kubernetes-architecture.md)
-3. **Set Up Local Environment**: Use [KIND setup](docs/03-local-setup-kind.md) for local development
-4. **Explore Management**: Learn [Rancher](docs/04-rancher-management.md) for cluster management
-5. **Go Production**: Deploy [HA clusters](docs/05-ha-cluster-rke2.md) with RKE2
-6. **Add Networking**: Configure [MetalLB](docs/06-loadbalancing-metallb.md) for load balancing
-7. **Secure Applications**: Implement [WAF protection](docs/07-waf-security.md)
+### For Complete Beginners
+1. **Start with Presentation**: Review [Introduction Presentation](docs/00-introduction-presentation.md) to understand WHY Kubernetes matters
+2. **Install Prerequisites**: Follow the [prerequisites guide](docs/00-prerequisites.md)
+3. **Hands-On Workshop**: Complete [Workshop Exercises](docs/workshop/) - Deploy real applications!
+4. **Learn Fundamentals**: Read [Why Containerize?](docs/01-why-containerize.md) and [Kubernetes Architecture](docs/02-kubernetes-architecture.md)
+5. **Practice Locally**: Set up [local cluster with K3d](docs/04-local-setup-k3d.md)
+
+### For Experienced Developers
+1. **Quick Review**: Skim [Kubernetes Architecture](docs/02-kubernetes-architecture.md) and [Components](docs/05-kubernetes-components.md)
+2. **Deploy Applications**: Jump into [Workshop Exercises](docs/workshop/) for hands-on practice
+3. **Production Setup**: Learn [HA clusters with RKE2](docs/08-ha-cluster-rke2.md)
+4. **Advanced Topics**: Implement [Load Balancing](docs/09-loadbalancing-metallb.md), [Security](docs/10-waf-security.md), and [GitOps](docs/11-devops-kubernetes-argocd.md)
+
+### For Enterprise/Production
+1. **Architecture**: Review [Kubernetes Architecture](docs/02-kubernetes-architecture.md) and [Administration & Security](docs/06-kubernetes-administration-security.md)
+2. **High Availability**: Deploy [HA cluster with RKE2](docs/08-ha-cluster-rke2.md)
+3. **Management**: Set up [Rancher for cluster management](docs/07-rancher-management.md)
+4. **Networking**: Configure [MetalLB load balancing](docs/09-loadbalancing-metallb.md)
+5. **Security**: Implement [WAF protection](docs/10-waf-security.md)
+6. **DevOps**: Establish [GitOps workflow with ArgoCD](docs/11-devops-kubernetes-argocd.md)
 
 ## Contributing
 
