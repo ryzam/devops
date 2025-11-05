@@ -81,9 +81,6 @@ Before starting, ensure you have the required tools installed. See [Prerequisite
 5. **Security**: Implement [WAF protection](docs/10-waf-security.md)
 6. **DevOps**: Establish [GitOps workflow with ArgoCD](docs/11-devops-kubernetes-argocd.md)
 
-## Contributing
-
-This tutorial is designed to be beginner-friendly yet comprehensive. If you find errors or have suggestions for improvements, please open an issue or submit a pull request.
 
 ## License
 
