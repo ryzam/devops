@@ -24,8 +24,6 @@
 
 ---
 
-## Slide 1: Welcome & Icebreaker (5 minutes)
-
 ### Visual
 ```mermaid
 graph LR
