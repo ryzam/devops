@@ -12,7 +12,8 @@
 ## Speaker Bio & Contact
 
 **About the Trainer:**
-- Senior DevOps Engineer with 10+ years experience
+- Senior DevOps Engineer with 5+ years experience
+- Over 25 years of software development experience, beginning with Java 1.0 and Python during their early adoption phase.
 - Extensive background in ASP.NET Core and Node.js development
 - Deployed Kubernetes in production for enterprises
 - Successfully transitioned teams from traditional to cloud-native DevOps
