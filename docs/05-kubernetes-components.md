@@ -407,43 +407,256 @@ kubectl get services
 kubectl get endpoints nginx-service
 ```
 
-### Exercise 3: Using ConfigMaps
+### Exercise 3: Using ConfigMaps to Configure Nginx
 
-1. **Create a ConfigMap:**
+ConfigMaps can be used to inject configuration data into pods. In this exercise, we'll use a ConfigMap to customize nginx's index.html content without rebuilding the Docker image.
+
+**Use Case:** Update web content without changing container images - perfect for configurable web pages, configuration files, or application settings.
+
+1. **Create a ConfigMap with HTML content:**
 
 ```yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: app-config
+  name: nginx-html
+  labels:
+    app: nginx
 data:
-  APP_ENV: "production"
-  LOG_LEVEL: "info"
-  DATABASE_URL: "postgres://db:5432/myapp"
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Kubernetes ConfigMap Demo</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 50px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+            }
+            .container {
+                background: rgba(255,255,255,0.1);
+                padding: 30px;
+                border-radius: 10px;
+                backdrop-filter: blur(10px);
+            }
+            h1 { margin-top: 0; }
+            .info { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 5px; margin-top: 20px; }
+            .highlight { color: #ffd700; font-weight: bold; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🚀 Kubernetes ConfigMap Demo</h1>
+            <p>This HTML content is served from a <span class="highlight">ConfigMap</span>, not baked into the container image!</p>
+            <div class="info">
+                <h3>Why is this useful?</h3>
+                <ul>
+                    <li>✅ Update content without rebuilding images</li>
+                    <li>✅ Separate configuration from code</li>
+                    <li>✅ Different content per environment (dev/staging/prod)</li>
+                    <li>✅ Share configuration across multiple pods</li>
+                    <li>✅ Version control your configurations</li>
+                </ul>
+            </div>
+            <div class="info">
+                <h3>Pod Information:</h3>
+                <p><strong>Hostname:</strong> <span id="hostname">Loading...</span></p>
+                <p><strong>Time:</strong> <span id="time"></span></p>
+            </div>
+        </div>
+        <script>
+            // Display hostname via API call
+            fetch('/api/hostname')
+                .then(r => r.text())
+                .then(h => document.getElementById('hostname').textContent = h)
+                .catch(() => document.getElementById('hostname').textContent = 'N/A');
+            
+            // Update time
+            function updateTime() {
+                document.getElementById('time').textContent = new Date().toLocaleString();
+            }
+            updateTime();
+            setInterval(updateTime, 1000);
+        </script>
+    </body>
+    </html>
+  
+  nginx.conf: |
+    events {
+        worker_connections 1024;
+    }
+    http {
+        include /etc/nginx/mime.types;
+        default_type application/octet-stream;
+        
+        server {
+            listen 80;
+            server_name _;
+            root /usr/share/nginx/html;
+            index index.html;
+            
+            location / {
+                try_files $uri $uri/ =404;
+            }
+            
+            location /api/hostname {
+                default_type text/plain;
+                return 200 $hostname;
+            }
+        }
+    }
 ```
 
-2. **Use ConfigMap in a pod:**
+2. **Create deployment that mounts the ConfigMap as files:**
 
 ```yaml
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: config-pod
+  name: nginx-configmap-demo
+  labels:
+    app: nginx-demo
 spec:
-  containers:
-  - name: app
-    image: busybox
-    command: ["env"]
-    envFrom:
-    - configMapRef:
-        name: app-config
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx-demo
+  template:
+    metadata:
+      labels:
+        app: nginx-demo
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        # Mount ConfigMap as index.html file
+        - name: html-content
+          mountPath: /usr/share/nginx/html/index.html
+          subPath: index.html
+        # Mount nginx configuration
+        - name: nginx-config
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+      volumes:
+      # Create volume from ConfigMap
+      - name: html-content
+        configMap:
+          name: nginx-html
+          items:
+          - key: index.html
+            path: index.html
+      - name: nginx-config
+        configMap:
+          name: nginx-html
+          items:
+          - key: nginx.conf
+            path: nginx.conf
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-configmap-service
+  labels:
+    app: nginx-demo
+spec:
+  type: NodePort
+  selector:
+    app: nginx-demo
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: 30090
 ```
 
+3. **Deploy and test:**
+
 ```bash
+# Apply the ConfigMap
 kubectl apply -f configmap.yaml
-kubectl apply -f config-pod.yaml
-kubectl logs config-pod
+
+# Deploy nginx with ConfigMap
+kubectl apply -f deployment.yaml
+
+# Verify pods are running
+kubectl get pods -l app=nginx-demo
+
+# Access the service
+kubectl port-forward service/nginx-configmap-service 8080:80
+
+# Open browser: http://localhost:8080
+# You should see your custom HTML from ConfigMap!
+
+# Or test with curl
+curl http://localhost:8080
 ```
+
+4. **Update ConfigMap content (without pod restart):**
+
+```bash
+# Edit ConfigMap
+kubectl edit configmap nginx-html
+
+# Change the HTML content, for example:
+# - Change title to "Updated Content!"
+# - Modify the gradient colors
+# - Add new information
+
+# Save and exit
+
+# Wait a moment (ConfigMaps are eventually consistent)
+# Reload browser - content updates automatically!
+
+# Note: For immediate update, restart pods:
+kubectl rollout restart deployment nginx-configmap-demo
+```
+
+5. **View ConfigMap content:**
+
+```bash
+# View ConfigMap
+kubectl get configmap nginx-html -o yaml
+
+# Describe ConfigMap
+kubectl describe configmap nginx-html
+
+# Exec into pod and verify file
+kubectl exec -it <pod-name> -- cat /usr/share/nginx/html/index.html
+```
+
+**How It Works:**
+
+```mermaid
+graph TB
+    CM[ConfigMap<br/>nginx-html] --> VOL[Volume<br/>configMap volume]
+    VOL --> MOUNT1[volumeMount<br/>/usr/share/nginx/html/index.html]
+    VOL --> MOUNT2[volumeMount<br/>/etc/nginx/nginx.conf]
+    MOUNT1 --> NGINX1[Nginx Pod 1<br/>Serves custom HTML]
+    MOUNT2 --> NGINX1
+    MOUNT1 --> NGINX2[Nginx Pod 2<br/>Serves custom HTML]
+    MOUNT2 --> NGINX2
+    
+    style CM fill:#4CAF50,color:#fff
+    style NGINX1 fill:#2196F3,color:#fff
+    style NGINX2 fill:#2196F3,color:#fff
+```
+
+**Key Concepts:**
+- `volumeMounts`: Mounts ConfigMap into container filesystem
+- `subPath`: Mounts individual file instead of entire directory
+- `items`: Selects specific keys from ConfigMap
+- Updates reflect automatically (with small delay) or immediately after pod restart
+
+**Advantages:**
+- ✅ No image rebuild needed for content changes
+- ✅ Same image works across environments with different ConfigMaps
+- ✅ Easy to version control configuration separately from code
+- ✅ Share configuration across multiple pods
+- ✅ Update running applications by editing ConfigMap
 
 ### Exercise 4: Working with Secrets
 

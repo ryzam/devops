@@ -13,6 +13,7 @@ Welcome to the practical Kubernetes workshop! This hands-on session will guide y
 By the end of this workshop, you'll have:
 - ✅ Deployed an ASP.NET Core API to Kubernetes
 - ✅ Deployed a Node.js web application to Kubernetes
+- ✅ Deployed a Laravel PHP application to Kubernetes
 - ✅ Scaled applications dynamically
 - ✅ Performed rolling updates with zero downtime
 - ✅ Exposed services to external traffic
@@ -53,7 +54,26 @@ Deploy a web application with database backend:
 - Service discovery
 - Persistent storage
 
-### Exercise 3: Scaling and Updates (20 minutes)
+### Exercise 3: Deploy Laravel PHP Application (30 minutes)
+**Location:** [`laravel/`](laravel/)
+
+Deploy a Blog API with PHP Laravel framework:
+- Build Laravel application with Nginx + PHP-FPM
+- Deploy MySQL StatefulSet for database
+- Deploy Redis for caching and sessions
+- Run database migrations in init containers
+- Configure environment with ConfigMaps and Secrets
+- Test RESTful API endpoints
+
+**Skills Gained:**
+- Multi-container pods (Nginx + PHP-FPM)
+- Init containers for database migrations
+- Redis integration for caching
+- Laravel-specific deployment patterns
+- PHP application containerization
+- Advanced StatefulSet configurations
+
+### Exercise 4: Scaling and Updates (20 minutes)
 **Location:** [`scaling-updates/`](scaling-updates/)
 
 Experience Kubernetes automation:

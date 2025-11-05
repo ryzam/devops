@@ -6,8 +6,9 @@ This comprehensive Kubernetes DevOps training tutorial covers everything from co
 
 **New to Kubernetes?** Start here:
 1. 📊 [Introduction Presentation](docs/00-introduction-presentation.md) - Interactive presentation for newcomers
-2. 🔨 [Hands-On Workshop](docs/workshop/) - Practical exercises with ASP.NET Core and Node.js
-3. 📚 Follow the learning path below
+2. 🔨 [Hands-On Workshop](docs/workshop/) - Practical exercises with ASP.NET Core, Node.js, and Laravel
+3. 📅 [10-Day Training Agenda](docs/TRAINING-AGENDA.md) - Complete training schedule with time allocations
+4.  Follow the learning path below
 
 ## What You'll Learn
 
@@ -28,10 +29,12 @@ Before starting, ensure you have the required tools installed. See [Prerequisite
 
 ### 🎓 Getting Started (New!)
 - [Introduction Presentation](docs/00-introduction-presentation.md) - Complete presentation for DevOps newcomers with real-world case studies
+- [10-Day Training Agenda](docs/TRAINING-AGENDA.md) - Detailed training schedule (70 hours total, 8:30 AM - 5:00 PM daily)
 - [Hands-On Workshop](docs/workshop/) - Interactive workshop exercises
   - [Workshop Overview](docs/workshop/README.md) - Workshop structure and setup
   - [Exercise 1: ASP.NET Core API](docs/workshop/aspnet-core/) - Deploy .NET microservice to Kubernetes
   - [Exercise 2: Node.js Web App](docs/workshop/nodejs/) - Full-stack app with MongoDB
+  - [Exercise 3: Laravel PHP App](docs/workshop/laravel/) - Blog API with MySQL and Redis
 
 ### 📋 Prerequisites
 - [Prerequisites and Installation](docs/00-prerequisites.md) - Required tools and setup
