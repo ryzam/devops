@@ -41,8 +41,9 @@ Before starting, ensure you have the required tools installed. See [Prerequisite
 
 ### 📖 Fundamentals
 - [Why Containerize?](docs/01-why-containerize.md) - Containerization advantages and Docker basics
-- [Kubernetes Architecture](docs/02-kubernetes-architecture.md) - Master-worker architecture and components
-- [Why Kubernetes? Container Orchestration](docs/03-why-kubernetes-orchestration.md) - Real-world orchestration benefits and use cases
+- [Why Kubernetes? Container Orchestration](docs/02-why-kubernetes-orchestration.md) - Real-world orchestration benefits and use cases
+- [Kubernetes Architecture](docs/03-kubernetes-architecture.md) - Master-worker architecture and components
+
 
 ### Getting Started
 - [Setting up a Local Environment with K3d](docs/04-local-setup-k3d.md) - Local cluster setup with K3d
@@ -64,17 +65,17 @@ Before starting, ensure you have the required tools installed. See [Prerequisite
 1. **Start with Presentation**: Review [Introduction Presentation](docs/00-introduction-presentation.md) to understand WHY Kubernetes matters
 2. **Install Prerequisites**: Follow the [prerequisites guide](docs/00-prerequisites.md)
 3. **Hands-On Workshop**: Complete [Workshop Exercises](docs/workshop/) - Deploy real applications!
-4. **Learn Fundamentals**: Read [Why Containerize?](docs/01-why-containerize.md) and [Kubernetes Architecture](docs/02-kubernetes-architecture.md)
+4. **Learn Fundamentals**: Read [Why Containerize?](docs/01-why-containerize.md) and [Kubernetes Architecture](docs/03-kubernetes-architecture.md)
 5. **Practice Locally**: Set up [local cluster with K3d](docs/04-local-setup-k3d.md)
 
 ### For Experienced Developers
-1. **Quick Review**: Skim [Kubernetes Architecture](docs/02-kubernetes-architecture.md) and [Components](docs/05-kubernetes-components.md)
+1. **Quick Review**: Skim [Kubernetes Architecture](docs/03-kubernetes-architecture.md) and [Components](docs/05-kubernetes-components.md)
 2. **Deploy Applications**: Jump into [Workshop Exercises](docs/workshop/) for hands-on practice
 3. **Production Setup**: Learn [HA clusters with RKE2](docs/08-ha-cluster-rke2.md)
 4. **Advanced Topics**: Implement [Load Balancing](docs/09-loadbalancing-metallb.md), [Security](docs/10-waf-security.md), and [GitOps](docs/11-devops-kubernetes-argocd.md)
 
 ### For Enterprise/Production
-1. **Architecture**: Review [Kubernetes Architecture](docs/02-kubernetes-architecture.md) and [Administration & Security](docs/06-kubernetes-administration-security.md)
+1. **Architecture**: Review [Kubernetes Architecture](docs/03-kubernetes-architecture.md) and [Administration & Security](docs/06-kubernetes-administration-security.md)
 2. **High Availability**: Deploy [HA cluster with RKE2](docs/08-ha-cluster-rke2.md)
 3. **Management**: Set up [Rancher for cluster management](docs/07-rancher-management.md)
 4. **Networking**: Configure [MetalLB load balancing](docs/09-loadbalancing-metallb.md)

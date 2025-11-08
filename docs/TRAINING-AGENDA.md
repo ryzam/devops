@@ -48,17 +48,17 @@
 
 | Time | Duration | Topic | Type | Materials |
 |------|----------|-------|------|-----------|
-| 2:00 - 3:00 | 60 min | **Why Kubernetes?** | Lecture | [03-why-kubernetes-orchestration.md](03-why-kubernetes-orchestration.md) |
+| 2:00 - 3:00 | 60 min | **Why Kubernetes?** | Lecture | [02-why-kubernetes-orchestration.md](02-why-kubernetes-orchestration.md) |
 | | | - Container orchestration challenges | | |
 | | | - Kubernetes core concepts | | |
 | | | - Industry adoption and ecosystem | | |
 | 3:00 - 3:10 | 10 min | Break | - | - |
-| 3:10 - 4:10 | 60 min | **Kubernetes Architecture** | Lecture | [02-kubernetes-architecture.md](02-kubernetes-architecture.md) |
+| 3:10 - 4:10 | 60 min | **Kubernetes Architecture** | Lecture | [03-kubernetes-architecture.md](03-kubernetes-architecture.md) |
 | | | - Control plane components | | |
 | | | - Worker node components | | |
 | | | - How components interact | | |
 | 4:10 - 5:00 | 50 min | **Environment Setup** | Hands-On | [00-prerequisites.md](00-prerequisites.md) |
-| | | - Install kubectl, KIND, Docker Desktop | | |
+| | | - Install kubectl, k3d, Docker Desktop | | |
 | | | - Verify installations | | |
 | | | - Create first Kubernetes cluster | | |
 | | | - kubectl basic commands | | |

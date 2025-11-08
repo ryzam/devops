@@ -1,0 +1,35 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{208BA388-4CEE-2CBF-559C-5607C099C1F8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workshop", "workshop", "{729AC6F8-6C5D-7199-B651-7F416A78C534}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "aspnet-core", "aspnet-core", "{4100CA87-FA9A-10D7-09D2-E6C7854DC243}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProductApi", "docs\workshop\aspnet-core\src\ProductApi.csproj", "{DAF93DD6-7E7B-B216-8C9A-9974D1B15088}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DAF93DD6-7E7B-B216-8C9A-9974D1B15088}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DAF93DD6-7E7B-B216-8C9A-9974D1B15088}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DAF93DD6-7E7B-B216-8C9A-9974D1B15088}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DAF93DD6-7E7B-B216-8C9A-9974D1B15088}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{729AC6F8-6C5D-7199-B651-7F416A78C534} = {208BA388-4CEE-2CBF-559C-5607C099C1F8}
+		{4100CA87-FA9A-10D7-09D2-E6C7854DC243} = {729AC6F8-6C5D-7199-B651-7F416A78C534}
+		{DAF93DD6-7E7B-B216-8C9A-9974D1B15088} = {4100CA87-FA9A-10D7-09D2-E6C7854DC243}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4836D8E7-5CF9-484C-A53F-174418377ED3}
+	EndGlobalSection
+EndGlobal

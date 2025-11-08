@@ -32,7 +32,7 @@ K3d is a lightweight wrapper to run K3s (a certified Kubernetes distribution) in
 1.  **Create a cluster:** To create a new cluster, run the following command:
 
    ```bash
-   k3d cluster create mycluster --port "8080:80@loadbalancer" --port "8443:443@loadbalancer"
+   k3d cluster create mycluster --api-port 6443 -port "8080:80@loadbalancer" --port "8443:443@loadbalancer"
    ```
 
     This creates one master node and with 2 worker agents cluster with K3s. The cluster will be available immediately.
@@ -135,6 +135,7 @@ Create a multi-node cluster for more realistic testing:
 k3d cluster create multinode \
   --servers 1 \
   --agents 2 \
+  --api-port 6443 \
   --port "8080:80@loadbalancer" \
   --port "8443:443@loadbalancer"
 ```
@@ -216,3 +217,141 @@ docker push k3d-myregistry.localhost:5000/myapp:latest
 - **DNS issues**: Test with: `kubectl run test --image=busybox --rm -it -- nslookup kubernetes.default`
 - **Cleanup**: List all clusters: `k3d cluster list`, then delete: `k3d cluster delete CLUSTER_NAME`
 - **Kubeconfig issues**: Regenerate with: `k3d kubeconfig get CLUSTER_NAME > ~/.kube/config`
+
+---
+
+## Cannot connect to API Server
+
+This is a common connectivity issue with k3d clusters on Windows. The error indicates that kubectl is trying to connect to an internal Docker network IP (172.30.120.116:6443) that isn't accessible from your Windows host machine.
+
+## Troubleshooting Steps
+
+### 1. Check if the k3d cluster is running
+
+```bash
+k3d cluster list
+```
+
+You should see your cluster in the list with a status indicator. If it's not running, the cluster might have stopped.
+
+### 2. Check Docker containers
+
+```bash
+docker ps
+```
+
+Look for containers with names starting with `k3d-`. If you don't see any, the cluster isn't running.
+
+### 3. Verify your kubeconfig
+
+```bash
+kubectl config view
+```
+
+Check the `server` address in your current context - it's likely pointing to `https://172.30.120.116:6443`.
+
+## Solutions
+
+### Solution 1: Recreate the cluster with proper port mapping (Recommended)
+
+Delete and recreate your k3d cluster with explicit port mapping to localhost:
+
+```bash
+# Delete the existing cluster
+k3d cluster delete <cluster-name>
+
+# Create a new cluster with proper port mapping
+k3d cluster create my-cluster --api-port 6443 --port "8080:80@loadbalancer"
+```
+
+This creates a cluster where:
+- The Kubernetes API is accessible at `https://0.0.0.0:6443`
+- HTTP traffic on port 8080 is forwarded to the cluster's ingress
+
+### Solution 2: Update the kubeconfig (If recreating isn't an option)
+
+If the cluster is running but the kubeconfig is wrong:
+
+```bash
+# Get the cluster name
+k3d cluster list
+
+# Update kubeconfig
+k3d kubeconfig merge <cluster-name> --kubeconfig-merge-default
+
+# Or write it to a specific file
+k3d kubeconfig get <cluster-name> > ~/.kube/config
+```
+
+Then manually edit the kubeconfig to change the server address from `https://172.30.120.116:6443` to `https://0.0.0.0:6443` or `https://localhost:6443`.
+
+### Solution 3: Restart the cluster
+
+Sometimes simply restarting the cluster resolves the issue:
+
+```bash
+# Stop the cluster
+k3d cluster stop <cluster-name>
+
+# Start the cluster
+k3d cluster start <cluster-name>
+
+# Update kubeconfig
+k3d kubeconfig merge <cluster-name> --kubeconfig-merge-default
+```
+
+## Verification
+
+After applying any solution, verify the connection:
+
+```bash
+# Check cluster info
+kubectl cluster-info
+
+# List nodes
+kubectl get nodes
+
+# Check if you can access the API
+kubectl get namespaces
+```
+
+## Windows-Specific Considerations
+
+On Windows, k3d runs inside Docker Desktop's Linux VM. The issue often occurs because:
+
+1. **Docker Desktop networking**: The internal Docker IPs aren't directly accessible from Windows
+2. **WSL2 networking**: If using WSL2, there can be network translation issues
+3. **Port conflicts**: Port 6443 might be in use by another application
+
+**Best Practice for Windows:**
+Always create k3d clusters with explicit port mapping to `0.0.0.0` or `localhost`:
+
+```bash
+k3d cluster create dev-cluster \
+  --api-port 6550 \
+  --servers 1 \
+  --agents 2 \
+  --port "8080:80@loadbalancer" \
+  --port "8443:443@loadbalancer"
+```
+
+This example uses port 6550 for the API (in case 6443 is occupied) and maps common HTTP/HTTPS ports.
+
+## Quick Fix Commands
+
+If you just want to get up and running quickly:
+
+```bash
+# Delete current cluster
+k3d cluster delete k3s-default
+
+# Create new cluster with correct configuration
+k3d cluster create dev \
+  --api-port 6443 \
+  --port "8080:80@loadbalancer" \
+  --port "8443:443@loadbalancer" \
+  --agents 2
+
+# Verify it works
+kubectl get nodes
+```
