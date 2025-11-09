@@ -403,6 +403,57 @@ spec:
         name: app-config
 ```
 
+Change nginx index.html using Volume mounts
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-html
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Welcome</title>
+    </head>
+    <body>
+      <h1>Hello from ConfigMap!</h1>
+      <p>Environment: Production</p>
+    </body>
+    </html>
+```
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: html-content
+          mountPath: /usr/share/nginx/html
+          readOnly: true
+      volumes:
+      - name: html-content
+        configMap:
+          name: nginx-html
+```
+
 ConfigMaps are essential for following the **12-factor app methodology**, particularly the principle of storing config in the environment rather than in code.
 
 **Secrets** store sensitive information like passwords, tokens, and keys, encoded in base64.
