@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: podinfo-api
+  labels:
+    app: podinfo-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: podinfo-api
+  template:
+    metadata:
+      labels:
+        app: podinfo-api
+    spec:
+      containers:
+      - name: podinfo-api
+        image: irwanazam/podinfo-api:latest
+        ports:
+        - containerPort: 8081
+          name: http
+        env:
+        - name: ASPNETCORE_URLS
+          value: "http://+:8081"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8081
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"

@@ -1,0 +1,44 @@
+using System.Net;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Configure Kestrel to listen on port 8080
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(8081);
+});
+
+var app = builder.Build();
+
+// Get pod information from environment variables
+var podName = Environment.GetEnvironmentVariable("HOSTNAME") ?? "unknown-pod";
+var nodeName = Environment.GetEnvironmentVariable("NODE_NAME") ?? Environment.MachineName;
+var podIP = Environment.GetEnvironmentVariable("POD_IP") ?? "unknown-ip";
+var namespaceName = Environment.GetEnvironmentVariable("NAMESPACE") ?? "default";
+
+// Generate a unique instance ID for this pod
+var instanceId = Guid.NewGuid().ToString().Substring(0, 8);
+
+app.MapGet("/info", () =>
+{
+    var podInfo = new
+    {
+        instanceId = instanceId,
+        podName = podName,
+        nodeName = nodeName,
+        podIP = podIP,
+        namespaceName = namespaceName,
+        timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss UTC"),
+        machineName = Environment.MachineName,
+        processId = Environment.ProcessId,
+        dotnetVersion = Environment.Version.ToString()
+    };
+
+    return Results.Json(podInfo);
+});
+
+app.MapGet("/health", () => Results.Ok("Healthy"));
+
+app.MapGet("/", () => Results.Ok($"Pod Load Balancer Demo API - Instance {instanceId} {nodeName}"));
+
+app.Run();

@@ -1,0 +1,26 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: autoscale-api-keda
+  labels:
+    app: autoscale-api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: autoscale-api
+  minReplicaCount: 2
+  maxReplicaCount: 10
+  triggers:
+  - type: prometheus
+    metadata:
+      serverAddress: http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+      metricName: http_requests_total
+      query: sum(rate(http_requests_total{namespace="default",pod=~"autoscale-api-.*"}[5m]))
+      threshold: "10"
+  - type: cpu
+    metadata:
+      type: Utilization
+      value: "60"
+  cooldownPeriod: 300
+  pollingInterval: 30

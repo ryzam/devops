@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "buBMzmJY7tNhmM7ZFPfjNRkdS+6izP8xLSk7kJ4vXBw=",
+  "Source": "PodInfoApi",
+  "BasePath": "_content/PodInfoApi",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

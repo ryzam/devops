@@ -316,7 +316,94 @@ This shows:
 
 ### ConfigMaps and Secrets: Configuration Management
 
-**ConfigMaps** store non-confidential configuration data in key-value pairs that can be consumed by pods.
+**ConfigMaps** are Kubernetes objects that store non-confidential configuration data as key-value pairs. They decouple configuration from container images, making your applications more portable and easier to manage.
+
+### What ConfigMaps Store
+
+- Configuration files
+- Environment variables
+- Command-line arguments
+- Any non-sensitive configuration data (text-based)
+
+### Key Benefits
+
+**Separation of Concerns**: Keep configuration separate from application code, so you can change settings without rebuilding container images.
+
+**Environment Flexibility**: Use different ConfigMaps for dev, staging, and production environments with the same container image.
+
+**Centralized Management**: Update configuration in one place and have it reflected across multiple pods.
+
+### Common Scenarios When to Use ConfigMaps
+
+**1. Application Configuration Files**
+You have an nginx web server that needs custom configuration. Instead of baking the config into the image:
+- Store `nginx.conf` in a ConfigMap
+- Mount it as a file in the container
+- Update the ConfigMap to change nginx behavior without redeploying
+
+**2. Environment-Specific Settings**
+Your application needs different database URLs for dev/staging/prod:
+- Create separate ConfigMaps for each environment
+- Inject them as environment variables
+- Deploy the same application image to all environments
+
+**3. Feature Flags**
+You want to enable/disable features without redeploying:
+- Store feature flags in a ConfigMap
+- Your app reads these flags at runtime
+- Toggle features by updating the ConfigMap
+
+**4. Shared Configuration Across Services**
+Multiple microservices need the same API endpoint or shared settings:
+- Store common config in one ConfigMap
+- Reference it from multiple deployments
+- Update once, affects all services
+
+**5. Application Tuning Parameters**
+Your app has performance settings (thread pools, timeouts, cache sizes):
+- Store these in a ConfigMap
+- Adjust values based on load testing
+- No need to rebuild or redeploy containers
+
+### When NOT to Use ConfigMaps
+
+- **Sensitive data** (passwords, tokens, certificates) → Use **Secrets** instead
+- **Large data** (>1MB) → ConfigMaps have size limits
+- **Binary data** → Better suited for Secrets or volume mounts
+- **Frequently changing data** → Consider external configuration services
+
+### Quick Example
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  database_url: "postgres://db.example.com:5432"
+  log_level: "info"
+  max_connections: "100"
+  app.properties: |
+    feature.newUI=true
+    cache.ttl=3600
+```
+
+Then use it in a Pod:
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp
+spec:
+  containers:
+  - name: app
+    image: myapp:1.0
+    envFrom:
+    - configMapRef:
+        name: app-config
+```
+
+ConfigMaps are essential for following the **12-factor app methodology**, particularly the principle of storing config in the environment rather than in code.
 
 **Secrets** store sensitive information like passwords, tokens, and keys, encoded in base64.
 
@@ -362,6 +449,27 @@ kubectl describe pod nginx-pod
 kubectl port-forward pod/nginx-pod 8080:80
 # Access http://localhost:8080
 ```
+
+## Run a temporary pod with curl
+```bash
+kubectl run test-pod --rm -it --image=curlimages/curl -- sh
+```
+
+## Inside the test pod, curl the service
+```bash
+curl http://nginx-service
+```
+
+## Or use service IP
+```bash
+curl http://<CLUSTER-IP>
+```
+
+## Exit the test pod
+```bash
+exit
+```
+
 
 ### Exercise 2: Creating Services
 
