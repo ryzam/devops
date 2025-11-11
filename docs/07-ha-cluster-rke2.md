@@ -22,7 +22,7 @@ RKE2 (Rancher Kubernetes Engine 2) is Rancher's next-generation Kubernetes distr
 1.  **Install RKE2:** To install RKE2, run the following command on all of your nodes:
 
     ```bash
-    curl -sfL https://get.rke2.io | sh -
+    curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE=server sudo sh -
     ```
 
 2.  **Configure the first master node:** On the first master node, create a file named `/etc/rancher/rke2/config.yaml` with the following content:
@@ -43,11 +43,11 @@ RKE2 (Rancher Kubernetes Engine 2) is Rancher's next-generation Kubernetes distr
 4.  **Configure the other master nodes:** On the other master nodes, create a file named `/etc/rancher/rke2/config.yaml` with the following content:
 
     ```yaml
-    server: https://<ip-of-first-master>:9345
+    server: https://<haproxy-ip>:9345
     token: <my-shared-secret>
     ```
 
-    Replace `<ip-of-first-master>` with the IP address of the first master node and `<my-shared-secret>` with the same secret token that you used on the first master node.
+    Replace `<haproxy-ip>` with the IP address of the HAProxy load balancer and `<my-shared-secret>` with the same secret token that you used on the first master node.
 
 5.  **Start RKE2 on the other master nodes:** To start RKE2 on the other master nodes, run the following command:
 
@@ -58,12 +58,16 @@ RKE2 (Rancher Kubernetes Engine 2) is Rancher's next-generation Kubernetes distr
 
 6.  **Configure the worker nodes:** On the worker nodes, create a file named `/etc/rancher/rke2/config.yaml` with the following content:
 
+    ```bash
+    curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE=agent sudo sh -
+    ```
+
     ```yaml
-    server: https://<ip-of-first-master>:9345
+    server: https://<haproxy-ip>:9345
     token: <my-shared-secret>
     ```
 
-    Replace `<ip-of-first-master>` with the IP address of the first master node and `<my-shared-secret>` with the same secret token that you used on the first master node.
+    Replace `<haproxy-ip>` with the IP address of the HAProxy load balancer and `<my-shared-secret>` with the same secret token that you used on the first master node.
 
 7.  **Start RKE2 on the worker nodes:** To start RKE2 on the worker nodes, run the following command:
 
@@ -71,6 +75,104 @@ RKE2 (Rancher Kubernetes Engine 2) is Rancher's next-generation Kubernetes distr
     systemctl enable rke2-agent
     systemctl start rke2-agent
     ```
+
+## HAProxy Load Balancer for Control Plane HA
+
+To achieve true high availability for the Kubernetes control plane, deploy HAProxy as a load balancer in front of the RKE2 master nodes. This ensures that API server requests are distributed across all masters and provides failover capabilities.
+
+### Why HAProxy?
+
+- **Load Balancing**: Distributes API server traffic across multiple master nodes
+- **Health Checks**: Automatically removes unhealthy masters from the pool
+- **Failover**: Seamless failover when a master node goes down
+- **Simple Configuration**: Lightweight and easy to deploy on bare-metal
+
+### HAProxy Installation and Configuration
+
+1. **Install HAProxy on a dedicated node or VM:**
+
+    ```bash
+    # On Ubuntu/Debian
+    sudo apt update
+    sudo apt install haproxy
+
+    # On CentOS/RHEL
+    sudo yum install haproxy
+    ```
+
+2. **Configure HAProxy:** Create `/etc/haproxy/haproxy.cfg` with the following configuration:
+
+    ```haproxy
+    global
+        log /dev/log local0
+        log /dev/log local1 notice
+        chroot /var/lib/haproxy
+        stats socket /run/haproxy/admin.sock mode 660 level admin expose-fd listeners
+        stats timeout 30s
+        user haproxy
+        group haproxy
+        daemon
+
+    defaults
+        log global
+        mode tcp
+        option tcplog
+        option dontlognull
+        timeout connect 5000
+        timeout client 50000
+        timeout server 50000
+
+    frontend kubernetes-api
+        bind *:9345  # RKE2 supervisor port
+        default_backend kubernetes-masters
+
+    backend kubernetes-masters
+        balance roundrobin
+        option tcp-check
+        server master1 <master1-ip>:9345 check
+        server master2 <master2-ip>:9345 check
+        server master3 <master3-ip>:9345 check
+
+    frontend kubernetes-api-6443
+        bind *:6443  # Kubernetes API server port
+        default_backend kubernetes-api-servers
+
+    backend kubernetes-api-servers
+        balance roundrobin
+        option tcp-check
+        server master1 <master1-ip>:6443 check
+        server master2 <master2-ip>:6443 check
+        server master3 <master3-ip>:6443 check
+
+    listen stats
+        bind *:9000
+        stats enable
+        stats uri /stats
+        stats refresh 30s
+    ```
+
+    Replace `<master1-ip>`, `<master2-ip>`, `<master3-ip>` with the actual IP addresses of your master nodes.
+
+3. **Enable and start HAProxy:**
+
+    ```bash
+    sudo systemctl enable haproxy
+    sudo systemctl start haproxy
+    ```
+
+4. **Verify HAProxy status:**
+
+    ```bash
+    sudo systemctl status haproxy
+    curl http://<haproxy-ip>:9000/stats  # Access HAProxy stats page
+    ```
+
+### HAProxy Best Practices
+
+- **Dedicated Node**: Run HAProxy on a separate node/VM for better isolation
+- **Keepalived Integration**: For HAProxy HA, integrate with Keepalived for VIP failover
+- **SSL Termination**: Consider SSL termination at HAProxy for encrypted traffic
+- **Monitoring**: Monitor HAProxy metrics and logs for troubleshooting
 
 ## Exercise: Deploy a High-Availability Application
 
@@ -128,6 +230,15 @@ RKE2 (Rancher Kubernetes Engine 2) is Rancher's next-generation Kubernetes distr
 
 ```mermaid
 graph TB
+    subgraph "External Clients"
+        ADMIN[Cluster Admin<br/>kubectl]
+        APPS[Applications<br/>API Calls]
+    end
+
+    subgraph "HAProxy Load Balancer"
+        HAPROXY[HAProxy<br/>Load Balancer<br/>VIP: 192.168.1.100<br/>Ports: 6443, 9345]
+    end
+
     subgraph "Control Plane Nodes (3+ for HA)"
         CP1[RKE2 Server 1<br/>API Server<br/>Controller Manager<br/>Scheduler]
         CP2[RKE2 Server 2<br/>API Server<br/>Controller Manager<br/>Scheduler]
@@ -145,6 +256,13 @@ graph TB
         W2[RKE2 Agent 2<br/>kubelet<br/>kube-proxy<br/>Container Runtime]
         WN[RKE2 Agent N<br/>...<br/>...]
     end
+
+    ADMIN --> HAPROXY
+    APPS --> HAPROXY
+
+    HAPROXY --> CP1
+    HAPROXY --> CP2
+    HAPROXY --> CP3
 
     CP1 --> ETCD1
     CP2 --> ETCD2
@@ -245,7 +363,7 @@ helm install prometheus prometheus-community/kube-prometheus-stack
 
 ## Best Practices for Production
 
-1. **Use External Load Balancer**: Place control plane nodes behind a load balancer
+1. **Use HAProxy Load Balancer**: Deploy HAProxy in front of control plane nodes for true HA and load distribution
 2. **Regular Backups**: Implement automated etcd snapshots
 3. **Security Hardening**: Enable CIS profiles and secrets encryption
 4. **Resource Planning**: Allocate sufficient CPU/memory for control plane components
