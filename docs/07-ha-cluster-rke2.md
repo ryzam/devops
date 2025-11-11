@@ -16,66 +16,6 @@ RKE2 (Rancher Kubernetes Engine 2) is Rancher's next-generation Kubernetes distr
 *   **Operating System:** Ubuntu 20.04 or CentOS 8
 *   **RAM:** 4GB
 *   **CPU:** 2 cores
-
-## Installation
-
-1.  **Install RKE2:** To install RKE2, run the following command on all of your nodes:
-
-    ```bash
-    curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE=server sudo sh -
-    ```
-
-2.  **Configure the first master node:** On the first master node, create a file named `/etc/rancher/rke2/config.yaml` with the following content:
-
-    ```yaml
-    token: <my-shared-secret>
-    ```
-
-    Replace `<my-shared-secret>` with a secret token that will be used to join the other nodes to the cluster.
-
-3.  **Start RKE2 on the first master node:** To start RKE2 on the first master node, run the following command:
-
-    ```bash
-    systemctl enable rke2-server
-    systemctl start rke2-server
-    ```
-
-4.  **Configure the other master nodes:** On the other master nodes, create a file named `/etc/rancher/rke2/config.yaml` with the following content:
-
-    ```yaml
-    server: https://<haproxy-ip>:9345
-    token: <my-shared-secret>
-    ```
-
-    Replace `<haproxy-ip>` with the IP address of the HAProxy load balancer and `<my-shared-secret>` with the same secret token that you used on the first master node.
-
-5.  **Start RKE2 on the other master nodes:** To start RKE2 on the other master nodes, run the following command:
-
-    ```bash
-    systemctl enable rke2-server
-    systemctl start rke2-server
-    ```
-
-6.  **Configure the worker nodes:** On the worker nodes, create a file named `/etc/rancher/rke2/config.yaml` with the following content:
-
-    ```bash
-    curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE=agent sudo sh -
-    ```
-
-    ```yaml
-    server: https://<haproxy-ip>:9345
-    token: <my-shared-secret>
-    ```
-
-    Replace `<haproxy-ip>` with the IP address of the HAProxy load balancer and `<my-shared-secret>` with the same secret token that you used on the first master node.
-
-7.  **Start RKE2 on the worker nodes:** To start RKE2 on the worker nodes, run the following command:
-
-    ```bash
-    systemctl enable rke2-agent
-    systemctl start rke2-agent
-    ```
-
 ## HAProxy Load Balancer for Control Plane HA
 
 To achieve true high availability for the Kubernetes control plane, deploy HAProxy as a load balancer in front of the RKE2 master nodes. This ensures that API server requests are distributed across all masters and provides failover capabilities.
@@ -173,6 +113,67 @@ To achieve true high availability for the Kubernetes control plane, deploy HAPro
 - **Keepalived Integration**: For HAProxy HA, integrate with Keepalived for VIP failover
 - **SSL Termination**: Consider SSL termination at HAProxy for encrypted traffic
 - **Monitoring**: Monitor HAProxy metrics and logs for troubleshooting
+
+
+
+## RKE2 Installation
+
+1.  **Install RKE2:** To install RKE2, run the following command on all of your nodes:
+
+    ```bash
+    curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE=server sudo sh -
+    ```
+
+2.  **Configure the first master node:** On the first master node, create a file named `/etc/rancher/rke2/config.yaml` with the following content:
+
+    ```yaml
+    token: <my-shared-secret>
+    ```
+
+    Replace `<my-shared-secret>` with a secret token that will be used to join the other nodes to the cluster.
+
+3.  **Start RKE2 on the first master node:** To start RKE2 on the first master node, run the following command:
+
+    ```bash
+    systemctl enable rke2-server
+    systemctl start rke2-server
+    ```
+
+4.  **Configure the other master nodes:** On the other master nodes, create a file named `/etc/rancher/rke2/config.yaml` with the following content:
+
+    ```yaml
+    server: https://<haproxy-ip>:9345
+    token: <my-shared-secret>
+    ```
+
+    Replace `<haproxy-ip>` with the IP address of the HAProxy load balancer and `<my-shared-secret>` with the same secret token that you used on the first master node.
+
+5.  **Start RKE2 on the other master nodes:** To start RKE2 on the other master nodes, run the following command:
+
+    ```bash
+    systemctl enable rke2-server
+    systemctl start rke2-server
+    ```
+
+6.  **Configure the worker nodes:** On the worker nodes, create a file named `/etc/rancher/rke2/config.yaml` with the following content:
+
+    ```bash
+    curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE=agent sudo sh -
+    ```
+
+    ```yaml
+    server: https://<haproxy-ip>:9345
+    token: <my-shared-secret>
+    ```
+
+    Replace `<haproxy-ip>` with the IP address of the HAProxy load balancer and `<my-shared-secret>` with the same secret token that you used on the first master node.
+
+7.  **Start RKE2 on the worker nodes:** To start RKE2 on the worker nodes, run the following command:
+
+    ```bash
+    systemctl enable rke2-agent
+    systemctl start rke2-agent
+    ```
 
 ## Exercise: Deploy a High-Availability Application
 
