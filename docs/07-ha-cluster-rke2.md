@@ -85,7 +85,7 @@ To achieve true high availability for the Kubernetes control plane, deploy HAPro
         server master2 <master2-ip>:6443 check
         server master3 <master3-ip>:6443 check
 
-    #---------------------------------------------------------------------
+#---------------------------------------------------------------------
 # HTTP Ingress (port 80)
 #---------------------------------------------------------------------
 frontend ingress_http_frontend
