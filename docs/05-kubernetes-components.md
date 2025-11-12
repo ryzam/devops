@@ -96,6 +96,8 @@ A Pod is the smallest and most basic deployable object in Kubernetes. It represe
 4. **Failed**: At least one container terminated with failure
 5. **Unknown**: State cannot be determined
 
+---
+
 ### Services: Network Abstraction
 
 A Service is an abstraction that defines a logical set of pods and a policy by which to access them. Services enable loose coupling between dependent pods and provide a stable endpoint for accessing applications.
@@ -314,6 +316,8 @@ This shows:
 - **Events**: Timeline of deployment events and status changes
 - **Pod Template**: The pod specification being deployed
 
+---
+
 ### ConfigMaps and Secrets: Configuration Management
 
 **ConfigMaps** are Kubernetes objects that store non-confidential configuration data as key-value pairs. They decouple configuration from container images, making your applications more portable and easier to manage.
@@ -458,6 +462,8 @@ ConfigMaps are essential for following the **12-factor app methodology**, partic
 
 **Secrets** store sensitive information like passwords, tokens, and keys, encoded in base64.
 
+---
+
 ### Persistent Volumes: Storage Abstraction
 
 Persistent Volumes (PV) provide API for users and administrators to abstract details of how storage is provided from how it is consumed.
@@ -466,6 +472,768 @@ Persistent Volumes (PV) provide API for users and administrators to abstract det
 - **PersistentVolume (PV)**: Storage resource in the cluster
 - **PersistentVolumeClaim (PVC)**: Request for storage by a user
 - **StorageClass**: Defines different classes of storage
+
+## Persistent Volumes (PV), Persistent Volume Claims (PVC), and StorageClass
+
+These three components work together to provide persistent storage in Kubernetes that survives pod restarts and rescheduling.
+
+## The Three Components
+
+### **Persistent Volume (PV)**
+- A piece of storage in the cluster
+- Provisioned by an administrator or dynamically via StorageClass
+- Has its own lifecycle independent of pods
+- Cluster-level resource (not namespaced)
+
+### **Persistent Volume Claim (PVC)**
+- A request for storage by a user/pod
+- Like a "ticket" to claim a PV
+- Namespaced resource
+- Specifies size, access modes, and storage class
+
+### **StorageClass**
+- Defines "classes" of storage (SSD, HDD, NFS, etc.)
+- Enables dynamic provisioning of PVs
+- Specifies the provisioner and parameters
+- Allows automatic PV creation when PVC is created
+
+## The Relationship
+
+```
+User/Pod          Kubernetes Cluster              Storage Backend
+   │                      │                             │
+   │  1. Create PVC       │                             │
+   │─────────────────────>│                             │
+   │                      │  2. StorageClass            │
+   │                      │     provisions PV           │
+   │                      │────────────────────────────>│
+   │                      │                             │
+   │                      │  3. PV created              │
+   │                      │<────────────────────────────│
+   │                      │                             │
+   │  4. PVC binds to PV  │                             │
+   │<─────────────────────│                             │
+   │                      │                             │
+   │  5. Pod mounts PVC   │                             │
+   │─────────────────────>│                             │
+```
+
+## Static vs Dynamic Provisioning
+
+### Static Provisioning (Manual)
+
+**Step 1: Admin creates PV manually**
+```yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: my-pv
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    path: /mnt/data
+```
+
+**Step 2: User creates PVC**
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: my-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: manual
+```
+
+**Step 3: Kubernetes binds PVC to PV**
+- Finds a PV that matches the requirements
+- Binds them together (1:1 relationship)
+
+### Dynamic Provisioning (Automatic)
+
+**Step 1: Admin creates StorageClass**
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast-ssd
+provisioner: kubernetes.io/aws-ebs
+parameters:
+  type: gp3
+  iops: "3000"
+  fsType: ext4
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+```
+
+**Step 2: User creates PVC (no PV needed)**
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: my-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: fast-ssd  # References StorageClass
+```
+
+**Step 3: Kubernetes automatically creates PV**
+- StorageClass provisioner creates the PV
+- PVC automatically binds to the new PV
+
+## Access Modes
+
+| Mode | Abbreviation | Description | Use Case |
+|------|-------------|-------------|----------|
+| **ReadWriteOnce** | RWO | Single node read-write | Most common, databases |
+| **ReadOnlyMany** | ROX | Multiple nodes read-only | Shared configuration |
+| **ReadWriteMany** | RWX | Multiple nodes read-write | Shared files (NFS) |
+| **ReadWriteOncePod** | RWOP | Single pod read-write | Exclusive access |
+
+**Important:** Not all storage backends support all modes!
+
+```
+Storage Backend Support:
+├── Local/HostPath: RWO only
+├── AWS EBS: RWO only
+├── GCE PD: RWO only
+├── Azure Disk: RWO only
+├── NFS: RWO, ROX, RWX
+├── CephFS: RWO, ROX, RWX
+└── Longhorn: RWO, RWX
+```
+
+## How Volume Mounting Works
+
+### The Complete Flow
+
+```
+1. PVC Created
+   └─> Kubernetes finds/creates matching PV
+       └─> PVC status: Bound
+
+2. Pod References PVC
+   └─> Kubelet on node receives pod spec
+       └─> Checks if volume is attached
+
+3. Attach Volume (if needed)
+   └─> Cloud provider attaches disk to node
+       └─> Example: AWS EBS disk attached to EC2 instance
+
+4. Mount Volume
+   └─> Kubelet creates mount point on node
+       └─> Mounts storage device to node filesystem
+           └─> Example: /var/lib/kubelet/pods/{pod-uid}/volumes/...
+
+5. Bind Mount into Container
+   └─> Container runtime bind-mounts from node to container
+       └─> Container sees volume at specified mountPath
+```
+
+### Visual Example
+
+```
+Physical Infrastructure:
+┌─────────────────────────────────────────────┐
+│ Node (Physical/VM)                          │
+│                                             │
+│  ┌───────────────────────────────────────┐  │
+│  │ Storage Device (EBS, Disk, NFS)       │  │
+│  │ /dev/xvdf (10GB)                      │  │
+│  └───────────────────────────────────────┘  │
+│              │                              │
+│              │ (kubelet mounts)             │
+│              ↓                              │
+│  ┌───────────────────────────────────────┐  │
+│  │ Node Filesystem                       │  │
+│  │ /var/lib/kubelet/pods/{uid}/volumes/  │  │
+│  │   kubernetes.io~aws-ebs/pvc-xxx/      │  │
+│  │     ├── data1.txt                     │  │
+│  │     └── data2.txt                     │  │
+│  └───────────────────────────────────────┘  │
+│              │                              │
+│              │ (bind mount)                 │
+│              ↓                              │
+│  ┌───────────────────────────────────────┐  │
+│  │ Container                             │  │
+│  │                                       │  │
+│  │  /app/data/  ←──(mounted here)        │  │
+│  │    ├── data1.txt                      │  │
+│  │    └── data2.txt                      │  │
+│  │                                       │  │
+│  │  Container sees files at /app/data    │  │
+│  └───────────────────────────────────────┘  │
+└─────────────────────────────────────────────┘
+```
+
+## Complete Example: Database with Persistent Storage
+
+### Step 1: Create StorageClass
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast-storage
+provisioner: kubernetes.io/no-provisioner  # For local storage
+volumeBindingMode: WaitForFirstConsumer
+```
+
+### Step 2: Create PersistentVolume (Static)
+
+```yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postgres-pv
+spec:
+  capacity:
+    storage: 20Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: fast-storage
+  local:
+    path: /mnt/disks/vol1
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - node01  # PV is on this specific node
+```
+
+### Step 3: Create PersistentVolumeClaim
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: fast-storage
+```
+
+**Check binding:**
+```bash
+kubectl get pvc postgres-pvc
+# NAME           STATUS   VOLUME        CAPACITY   ACCESS MODES   STORAGECLASS
+# postgres-pvc   Bound    postgres-pv   20Gi       RWO            fast-storage
+```
+
+### Step 4: Create Pod/Deployment Using PVC
+
+```yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_PASSWORD
+          value: "password123"
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: postgres-pvc
+```
+
+### What Happens When Pod Starts
+
+1. **Scheduler assigns pod to node01** (because PV has nodeAffinity)
+2. **Kubelet on node01 mounts the local disk:**
+   ```bash
+   # On node01
+   ls -la /var/lib/kubelet/pods/{pod-uid}/volumes/kubernetes.io~local-volume/postgres-pv/
+   # Shows: pgdata directory and PostgreSQL files
+   ```
+3. **Container sees mounted volume:**
+   ```bash
+   kubectl exec -it postgres-0 -- ls -la /var/lib/postgresql/data
+   # Shows: pgdata directory with database files
+   ```
+
+4. **Data persists even if pod is deleted:**
+   ```bash
+   kubectl delete pod postgres-0
+   # Pod recreates, but data remains on PV
+   ```
+
+## Volume Mount Configuration Options
+
+### Basic Mount
+
+```yaml
+volumeMounts:
+- name: data-volume
+  mountPath: /app/data
+```
+
+### With subPath (mount specific subdirectory)
+
+```yaml
+volumeMounts:
+- name: data-volume
+  mountPath: /app/config
+  subPath: config  # Mounts only 'config' subdirectory from PV
+```
+
+**Use case:** Multiple containers sharing one PVC:
+```yaml
+volumes:
+- name: shared-storage
+  persistentVolumeClaim:
+    claimName: shared-pvc
+containers:
+- name: app1
+  volumeMounts:
+  - name: shared-storage
+    mountPath: /data
+    subPath: app1-data
+- name: app2
+  volumeMounts:
+  - name: shared-storage
+    mountPath: /data
+    subPath: app2-data
+```
+
+### ReadOnly Mount
+
+```yaml
+volumeMounts:
+- name: data-volume
+  mountPath: /app/data
+  readOnly: true
+```
+
+### Mount Propagation
+
+```yaml
+volumeMounts:
+- name: data-volume
+  mountPath: /app/data
+  mountPropagation: HostToContainer  # Bidirectional, None
+```
+
+## Reclaim Policies
+
+What happens to PV when PVC is deleted?
+
+### 1. **Retain** (Default for manually created PVs)
+```yaml
+persistentVolumeReclaimPolicy: Retain
+```
+- PV remains after PVC deletion
+- Data preserved
+- PV must be manually deleted
+- **Use case:** Production data you don't want to lose
+
+### 2. **Delete**
+```yaml
+persistentVolumeReclaimPolicy: Delete
+```
+- PV and underlying storage deleted when PVC is deleted
+- Data is lost
+- **Use case:** Development, temporary storage
+
+### 3. **Recycle** (Deprecated)
+```yaml
+persistentVolumeReclaimPolicy: Recycle
+```
+- Performs basic scrub (`rm -rf /volume/*`)
+- Makes PV available for new claims
+- **Deprecated:** Use dynamic provisioning instead
+
+## StorageClass Examples
+
+### AWS EBS (Dynamic)
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: aws-ebs-gp3
+provisioner: ebs.csi.aws.com
+parameters:
+  type: gp3
+  iops: "3000"
+  throughput: "125"
+  fsType: ext4
+  encrypted: "true"
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+```
+
+### NFS (Dynamic with NFS provisioner)
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nfs-storage
+provisioner: nfs.csi.k8s.io
+parameters:
+  server: nfs-server.example.com
+  share: /exported/path
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+```
+
+### Local Storage (Static)
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-storage
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+```
+
+### Longhorn (Distributed storage)
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: longhorn
+provisioner: driver.longhorn.io
+parameters:
+  numberOfReplicas: "3"
+  staleReplicaTimeout: "30"
+  fsType: "ext4"
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+```
+
+## Volume Binding Modes
+
+### Immediate
+```yaml
+volumeBindingMode: Immediate
+```
+- PV created/bound immediately when PVC is created
+- May cause pod scheduling issues if PV is on wrong node
+
+### WaitForFirstConsumer (Recommended)
+```yaml
+volumeBindingMode: WaitForFirstConsumer
+```
+- PV creation/binding delayed until pod using PVC is scheduled
+- Ensures PV is created on the right node
+- Better for local storage and topology-aware provisioning
+
+## Real-World Scenarios
+
+### Scenario 1: WordPress with MySQL
+
+```yaml
+---
+# MySQL PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: fast-storage
+---
+# WordPress PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: wordpress-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: fast-storage
+---
+# MySQL Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8.0
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "rootpassword"
+        - name: MYSQL_DATABASE
+          value: "wordpress"
+        volumeMounts:
+        - name: mysql-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-storage
+        persistentVolumeClaim:
+          claimName: mysql-pvc
+---
+# WordPress Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wordpress
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wordpress
+  template:
+    metadata:
+      labels:
+        app: wordpress
+    spec:
+      containers:
+      - name: wordpress
+        image: wordpress:latest
+        env:
+        - name: WORDPRESS_DB_HOST
+          value: "mysql:3306"
+        - name: WORDPRESS_DB_NAME
+          value: "wordpress"
+        - name: WORDPRESS_DB_PASSWORD
+          value: "rootpassword"
+        volumeMounts:
+        - name: wordpress-storage
+          mountPath: /var/www/html
+      volumes:
+      - name: wordpress-storage
+        persistentVolumeClaim:
+          claimName: wordpress-pvc
+```
+
+### Scenario 2: Shared Storage (ReadWriteMany)
+
+```yaml
+---
+# NFS-based PVC for shared storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: shared-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: nfs-storage
+---
+# Multiple pods sharing the same volume
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: file-processor
+spec:
+  replicas: 3  # Multiple pods
+  selector:
+    matchLabels:
+      app: file-processor
+  template:
+    metadata:
+      labels:
+        app: file-processor
+    spec:
+      containers:
+      - name: processor
+        image: file-processor:1.0
+        volumeMounts:
+        - name: shared-files
+          mountPath: /shared-data
+      volumes:
+      - name: shared-files
+        persistentVolumeClaim:
+          claimName: shared-pvc
+```
+
+All 3 pods can read and write to `/shared-data` simultaneously.
+
+### Scenario 3: StatefulSet with Dynamic Provisioning
+
+```yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongodb
+spec:
+  serviceName: mongodb
+  replicas: 3
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:6.0
+        ports:
+        - containerPort: 27017
+        volumeMounts:
+        - name: mongo-data
+          mountPath: /data/db
+  volumeClaimTemplates:  # Creates PVC for each pod automatically
+  - metadata:
+      name: mongo-data
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 100Gi
+      storageClassName: fast-storage
+```
+
+This creates:
+- `mongo-data-mongodb-0` (100Gi)
+- `mongo-data-mongodb-1` (100Gi)
+- `mongo-data-mongodb-2` (100Gi)
+
+Each pod gets its own dedicated persistent storage.
+
+## Troubleshooting
+
+### Check PVC Status
+```bash
+kubectl get pvc
+# STATUS: Pending, Bound, Lost
+
+kubectl describe pvc my-pvc
+# Shows events and binding information
+```
+
+### Check PV Status
+```bash
+kubectl get pv
+# STATUS: Available, Bound, Released, Failed
+
+kubectl describe pv my-pv
+```
+
+### Common Issues
+
+**1. PVC stuck in Pending:**
+```bash
+# Check events
+kubectl describe pvc my-pvc
+
+# Common causes:
+# - No PV matches the requirements
+# - No StorageClass found
+# - Insufficient capacity
+# - Access mode mismatch
+```
+
+**2. Pod can't mount volume:**
+```bash
+kubectl describe pod my-pod
+
+# Look for:
+# - "FailedAttachVolume"
+# - "FailedMount"
+# - Permissions issues
+```
+
+**3. Volume already mounted elsewhere:**
+```
+Error: Volume is already exclusively attached to one node and can't be attached to another
+```
+Solution: Use RWX access mode or wait for previous pod to terminate.
+
+## Best Practices
+
+1. **Use StorageClass for dynamic provisioning** - Don't manually create PVs in production
+2. **Set appropriate reclaim policies** - Retain for production, Delete for dev
+3. **Use WaitForFirstConsumer** - Better scheduling for local storage
+4. **Enable volume expansion** - `allowVolumeExpansion: true`
+5. **Monitor storage usage** - Set up alerts for PVC capacity
+6. **Use StatefulSets for databases** - Better than Deployments for stateful apps
+7. **Backup your data** - PVs are not backups!
+8. **Use appropriate access modes** - RWO for most cases, RWX only when needed
+
+## Summary
+
+```
+Flow: Pod → PVC → PV → Physical Storage
+
+StorageClass: Defines how to create PVs dynamically
+PV: Actual storage resource in cluster
+PVC: Request for storage by user/pod
+Pod: Uses PVC to access storage
+
+Mounting Process:
+1. Attach storage device to node (if needed)
+2. Mount device to node filesystem
+3. Bind mount from node into container
+4. Container sees files at mountPath
+```
+
+The beauty of this system is **abstraction** - developers request storage via PVC without knowing the underlying storage implementation!
 
 ## Hands-on Exercises
 

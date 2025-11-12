@@ -16,6 +16,7 @@ RKE2 (Rancher Kubernetes Engine 2) is Rancher's next-generation Kubernetes distr
 *   **Operating System:** Ubuntu 20.04 or CentOS 8
 *   **RAM:** 4GB
 *   **CPU:** 2 cores
+
 ## HAProxy Load Balancer for Control Plane HA
 
 To achieve true high availability for the Kubernetes control plane, deploy HAProxy as a load balancer in front of the RKE2 master nodes. This ensures that API server requests are distributed across all masters and provides failover capabilities.
@@ -114,7 +115,7 @@ To achieve true high availability for the Kubernetes control plane, deploy HAPro
 - **SSL Termination**: Consider SSL termination at HAProxy for encrypted traffic
 - **Monitoring**: Monitor HAProxy metrics and logs for troubleshooting
 
-
+---
 
 ## RKE2 Installation
 
@@ -124,13 +125,19 @@ To achieve true high availability for the Kubernetes control plane, deploy HAPro
     curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE=server sudo sh -
     ```
 
-2.  **Configure the first master node:** On the first master node, create a file named `/etc/rancher/rke2/config.yaml` with the following content:
-
-    ```yaml
-    token: <my-shared-secret>
-    ```
-
-    Replace `<my-shared-secret>` with a secret token that will be used to join the other nodes to the cluster.
+2.  **Configure the first master node:** 
+   Configure RKE2 for HA:
+   - sudo mkdir -p /etc/rancher/rke2
+   - sudo nano /etc/rancher/rke2/config.yaml
+   - Edit `/etc/rancher/rke2/config.yaml` on **master nodes**:
+     On the first master node add you own security token, but if you want system generete token then go to step 3.
+     ```yaml
+     token: "<my-shared-secret>"
+     tls-san:
+      - ha-proxy-ip
+      - server-mastername
+      - server-masterip
+     ```
 
 3.  **Start RKE2 on the first master node:** To start RKE2 on the first master node, run the following command:
 
@@ -138,12 +145,25 @@ To achieve true high availability for the Kubernetes control plane, deploy HAPro
     systemctl enable rke2-server
     systemctl start rke2-server
     ```
+    If you are not generate token by yourself, a token that can be used to register other server or agent nodes will be created at /var/lib/rancher/rke2/server/node-token
+
+    Go to step 2, after get a token from a master one node.
+
+    For kubectl working with Cluster, you need to copy rke2.yaml into .kube folder
+
+    ```bash
+    mkdir .kube
+    cp /etc/rancher/rke2/rke2.yaml .kube/config
+    ```
 
 4.  **Configure the other master nodes:** On the other master nodes, create a file named `/etc/rancher/rke2/config.yaml` with the following content:
 
     ```yaml
     server: https://<haproxy-ip>:9345
     token: <my-shared-secret>
+    tls-san:
+      - server-mastername
+      - server-masterip
     ```
 
     Replace `<haproxy-ip>` with the IP address of the HAProxy load balancer and `<my-shared-secret>` with the same secret token that you used on the first master node.
@@ -174,6 +194,93 @@ To achieve true high availability for the Kubernetes control plane, deploy HAPro
     systemctl enable rke2-agent
     systemctl start rke2-agent
     ```
+8.  **List Cluster Nodes:** After success install node, you can list all nodes using the following command below:
+
+    ```bash
+    kubectl get nodes
+    ```
+
+9.  **Update Role Label:** In Kubernetes, **node “roles” are not actual rename-able objects** — they are just *labels* applied to nodes.
+So to “rename” a role, you simply remove the old role label and add a new one.
+
+
+### ✅ Check current labels
+
+```bash
+kubectl get nodes --show-labels
+```
+
+You should see labels like:
+
+```bash
+node-role.kubernetes.io/control-plane=""
+node-role.kubernetes.io/worker=""
+```
+
+---
+
+### ✅ Remove old role label
+
+Example: remove `worker` role from node `node01`:
+
+```sh
+kubectl label node node01 node-role.kubernetes.io/worker-
+```
+
+> Note the `-` at the end — that deletes the label.
+
+---
+
+### ✅ Add new role label
+
+Example: assign a new role `database`:
+
+```sh
+kubectl label node node01 node-role.kubernetes.io/database=""
+```
+
+---
+
+### Optional: Taints (if needed)
+
+Control-plane nodes are usually tainted.
+If you're modifying master roles and want to allow workloads to run there, remove taint:
+
+```sh
+kubectl taint nodes node01 node-role.kubernetes.io/control-plane-
+```
+
+---
+
+### Summary
+
+| Action                  | Command                                                               |
+| ----------------------- | --------------------------------------------------------------------- |
+| View labels             | `kubectl get nodes --show-labels`                                     |
+| Remove role             | `kubectl label node <node_name> node-role.kubernetes.io/<oldrole>-`   |
+| Add new role            | `kubectl label node <node_name> node-role.kubernetes.io/<newrole>=""` |
+| Remove taint (optional) | `kubectl taint nodes <node_name> node-role.kubernetes.io/<role>-`     |
+
+---
+
+Here’s the command to add the **worker** role label on a specific node (example: node name = `node01`):
+
+```sh
+kubectl label node node01 node-role.kubernetes.io/worker=""
+```
+
+✅ Done — now that node has the `worker` role label.
+
+If you need to remove any existing role before adding worker, do this first:
+
+```sh
+kubectl label node node01 node-role.kubernetes.io/<oldrole>-
+```
+
+Replace `<oldrole>` with whatever label you want to remove (e.g., `control-plane`).
+
+
+---
 
 ## Exercise: Deploy a High-Availability Application
 
@@ -287,7 +394,7 @@ Create `/etc/rancher/rke2/config.yaml` with advanced options:
 ```yaml
 # Cluster configuration
 cluster-cidr: "10.42.0.0/16"
-service-cidr: "10.43.0.0/16"
+service-cidr: "10.43.0.0/16
 cluster-dns: "10.43.0.10"
 
 # Security settings
