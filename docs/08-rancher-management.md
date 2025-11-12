@@ -11,6 +11,11 @@ Rancher is a comprehensive Kubernetes management platform that simplifies cluste
 - **Security Policies**: Implement and enforce security best practices across clusters
 - **Backup & Restore**: Automated backup solutions for cluster state and applications
 
+## Installing Helm
+```sh
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+```
+
 ## Installing Rancher
 
 Rancher can be installed in multiple ways depending on your environment and requirements. Here are the main installation options:
