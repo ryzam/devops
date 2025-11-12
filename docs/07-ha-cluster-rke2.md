@@ -85,6 +85,52 @@ To achieve true high availability for the Kubernetes control plane, deploy HAPro
         server master2 <master2-ip>:6443 check
         server master3 <master3-ip>:6443 check
 
+    #---------------------------------------------------------------------
+# HTTP Ingress (port 80)
+#---------------------------------------------------------------------
+frontend ingress_http_frontend
+    bind *:80
+    mode tcp
+    option tcplog
+    default_backend ingress_http_backend
+
+backend ingress_http_backend
+    mode tcp
+    balance roundrobin
+    option tcp-check
+    # Point to nodes where Ingress Controller runs
+    # If Ingress runs on masters:
+    server master1 <master-01:80> check fall 3 rise 2
+    server master2 <master-02:80> check fall 3 rise 2
+    server master3 <master-03:80> check fall 3 rise 2
+    server worker1 <worker-01:80> check fall 3 rise 2
+    server worker2 <worker-02:80> check fall 3 rise 2
+
+#---------------------------------------------------------------------
+# HTTPS Ingress (port 443)
+#---------------------------------------------------------------------
+frontend ingress_https_frontend
+    bind *:443
+    mode tcp
+    option tcplog
+    default_backend ingress_https_backend
+
+backend ingress_https_backend
+    mode tcp
+    balance roundrobin
+    option tcp-check
+    option ssl-hello-chk
+    # Point to nodes where Ingress Controller runs
+    server master1 <master-01:443> check fall 3 rise 2
+    server master2 <master-02:443> check fall 3 rise 2
+    server master3 <master-03:443> check fall 3 rise 2
+    server worker1 <worker-01:443> check fall 3 rise 2
+    server worker2 <worker-02:443> check fall 3 rise 2
+    
+    # Or if you have worker nodes:
+    # server worker1 10.0.0.21:443 check fall 3 rise 2
+    # server worker2 10.0.0.22:443 check fall 3 rise 2
+
     listen stats
         bind *:9000
         stats enable
