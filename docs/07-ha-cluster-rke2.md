@@ -184,6 +184,9 @@ To achieve true high availability for the Kubernetes control plane, deploy HAPro
     ```yaml
     server: https://<haproxy-ip>:9345
     token: <my-shared-secret>
+    tls-san:
+      - server-ha-proxy-hostname
+      - server-ha-proxy-ip
     ```
 
     Replace `<haproxy-ip>` with the IP address of the HAProxy load balancer and `<my-shared-secret>` with the same secret token that you used on the first master node.
@@ -243,7 +246,13 @@ kubectl label node node01 node-role.kubernetes.io/database=""
 
 ### Optional: Taints (if needed)
 
-Control-plane nodes are usually tainted.
+Control-plane nodes are usually tainted. If not tainted and you want to control pods not to deploy in the master node run this:
+
+```bash
+kubectl taint nodes <node-name> node-role.kubernetes.io/control-plane=:NoSchedule --overwrite
+```
+
+
 If you're modifying master roles and want to allow workloads to run there, remove taint:
 
 ```sh
