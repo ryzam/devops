@@ -30,18 +30,24 @@ To achieve true high availability for the Kubernetes control plane, deploy HAPro
 
 ### HAProxy Installation and Configuration
 
-1. **Install HAProxy on a dedicated node or VM:**
+1. **Install HAProxy with WAF support on a dedicated node or VM:**
 
     ```bash
     # On Ubuntu/Debian
     sudo apt update
-    sudo apt install haproxy
+    sudo apt install haproxy lua5.3
+
+    # Install ModSecurity for WAF
+    sudo apt install libapache2-mod-security2 modsecurity-crs
 
     # On CentOS/RHEL
-    sudo yum install haproxy
+    sudo yum install haproxy lua
+
+    # Install ModSecurity for WAF
+    sudo yum install mod_security mod_security_crs
     ```
 
-2. **Configure HAProxy:** Create `/etc/haproxy/haproxy.cfg` with the following configuration:
+2. **Configure HAProxy with WAF:** Create `/etc/haproxy/haproxy.cfg` with the following configuration:
 
     ```haproxy
     global
@@ -53,6 +59,9 @@ To achieve true high availability for the Kubernetes control plane, deploy HAPro
         user haproxy
         group haproxy
         daemon
+
+        # Lua configuration for WAF
+        lua-load /etc/haproxy/waf.lua
 
     defaults
         log global
@@ -86,18 +95,26 @@ To achieve true high availability for the Kubernetes control plane, deploy HAPro
         server master3 <master3-ip>:6443 check
 
     #---------------------------------------------------------------------
-    # HTTP Ingress (port 80)
+    # HTTP Ingress with WAF (port 80)
     #---------------------------------------------------------------------
     frontend ingress_http_frontend
         bind *:80
-        mode tcp
-        option tcplog
+        mode http
+        option httplog
+        option http-buffer-request
+        # Enable WAF filtering
+        filter lua.waf
+        # Rate limiting
+        stick-table type ip size 100k expire 30s store http_req_rate(10s)
+        http-request track-sc0 src
+        http-request deny deny_status 429 if { sc_http_req_rate(0) gt 100 }
         default_backend ingress_http_backend
 
     backend ingress_http_backend
-        mode tcp
+        mode http
         balance roundrobin
-        option tcp-check
+        option httpchk GET /healthz
+        http-request set-header X-Forwarded-Proto http
         # Point to nodes where Ingress Controller runs
         # If Ingress runs on masters:
         server master1 <master-01:80> check fall 3 rise 2
@@ -107,19 +124,26 @@ To achieve true high availability for the Kubernetes control plane, deploy HAPro
         server worker2 <worker-02:80> check fall 3 rise 2
 
     #---------------------------------------------------------------------
-    # HTTPS Ingress (port 443)
+    # HTTPS Ingress with WAF (port 443)
     #---------------------------------------------------------------------
     frontend ingress_https_frontend
-        bind *:443
-        mode tcp
-        option tcplog
+        bind *:443 ssl crt /etc/ssl/certs/
+        mode http
+        option httplog
+        option http-buffer-request
+        # Enable WAF filtering
+        filter lua.waf
+        # Rate limiting
+        stick-table type ip size 100k expire 30s store http_req_rate(10s)
+        http-request track-sc0 src
+        http-request deny deny_status 429 if { sc_http_req_rate(0) gt 100 }
         default_backend ingress_https_backend
 
     backend ingress_https_backend
-        mode tcp
+        mode http
         balance roundrobin
-        option tcp-check
-        option ssl-hello-chk
+        option httpchk GET /healthz
+        http-request set-header X-Forwarded-Proto https
         # Point to nodes where Ingress Controller runs
         server master1 <master-01:443> check fall 3 rise 2
         server master2 <master-02:443> check fall 3 rise 2
@@ -130,6 +154,29 @@ To achieve true high availability for the Kubernetes control plane, deploy HAPro
         # Or if you have worker nodes:
         # server worker1 10.0.0.21:443 check fall 3 rise 2
         # server worker2 10.0.0.22:443 check fall 3 rise 2
+
+    #---------------------------------------------------------------------
+    # WAF Configuration (Lua script)
+    #---------------------------------------------------------------------
+    # Create /etc/haproxy/waf.lua with the following content:
+    #
+    # core.register_faction("waf", function(txn)
+    #     -- Block common attack patterns
+    #     if txn.req:match("(union.*select|script.*alert|<script)") then
+    #         return "403"
+    #     end
+    #
+    #     -- Block directory traversal
+    #     if txn.req:match("(\\.\\.|%2e%2e)") then
+    #         return "403"
+    #     end
+    #
+    #     -- Log suspicious requests
+    #     if txn.req:match("(select.*from|drop.*table|eval\\()") then
+    #         core.Warning("WAF: Suspicious request blocked from " .. txn.f:src())
+    #         return "403"
+    #     end
+    # end)
 
     listen stats
         bind *:9000
@@ -159,7 +206,9 @@ To achieve true high availability for the Kubernetes control plane, deploy HAPro
 - **Dedicated Node**: Run HAProxy on a separate node/VM for better isolation
 - **Keepalived Integration**: For HAProxy HA, integrate with Keepalived for VIP failover
 - **SSL Termination**: Consider SSL termination at HAProxy for encrypted traffic
-- **Monitoring**: Monitor HAProxy metrics and logs for troubleshooting
+- **WAF Protection**: Enable WAF rules to block common web attacks before they reach applications
+- **Rate Limiting**: Implement rate limiting to prevent DDoS and brute force attacks
+- **Monitoring**: Monitor HAProxy metrics, logs, and WAF events for troubleshooting
 
 ---
 
@@ -526,7 +575,7 @@ helm install prometheus prometheus-community/kube-prometheus-stack
 
 ## Best Practices for Production
 
-1. **Use HAProxy Load Balancer**: Deploy HAProxy in front of control plane nodes for true HA and load distribution
+1. **Use HAProxy Load Balancer with WAF**: Deploy HAProxy with WAF protection in front of control plane nodes for true HA, load distribution, and security
 2. **Regular Backups**: Implement automated etcd snapshots
 3. **Security Hardening**: Enable CIS profiles and secrets encryption
 4. **Resource Planning**: Allocate sufficient CPU/memory for control plane components

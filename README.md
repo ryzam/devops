@@ -19,6 +19,7 @@ This comprehensive Kubernetes DevOps training tutorial covers everything from co
 - **Networking & Load Balancing**: MetalLB for bare-metal environments
 - **Security**: Web Application Firewall setup and best practices
 - **DevOps & GitOps**: Modern deployment practices with ArgoCD
+- **Observability**: Monitoring, tracing, and logging with OpenTelemetry
 - **Hands-on Exercises**: Practical examples throughout each topic
 
 ## Prerequisites
@@ -58,6 +59,7 @@ Before starting, ensure you have the required tools installed. See [Prerequisite
 
 ### DevOps & GitOps
 - [DevOps with Kubernetes and ArgoCD](docs/11-devops-kubernetes-argocd.md) - DevOps methodology, GitOps practices, and ArgoCD implementation
+- [Monitoring, Tracing, and Logging with OpenTelemetry](docs/13-monitoring-tracing-logging-opentelemetry.md) - Comprehensive observability setup in RKE2 clusters
 
 ## 🚀 Learning Paths
 
@@ -72,7 +74,7 @@ Before starting, ensure you have the required tools installed. See [Prerequisite
 1. **Quick Review**: Skim [Kubernetes Architecture](docs/03-kubernetes-architecture.md) and [Components](docs/05-kubernetes-components.md)
 2. **Deploy Applications**: Jump into [Workshop Exercises](docs/workshop/) for hands-on practice
 3. **Production Setup**: Learn [HA clusters with RKE2](docs/08-ha-cluster-rke2.md)
-4. **Advanced Topics**: Implement [Load Balancing](docs/09-loadbalancing-metallb.md), [Security](docs/10-waf-security.md), and [GitOps](docs/11-devops-kubernetes-argocd.md)
+4. **Advanced Topics**: Implement [Load Balancing](docs/09-loadbalancing-metallb.md), [Security](docs/10-waf-security.md), [GitOps](docs/11-devops-kubernetes-argocd.md), and [Observability](docs/13-monitoring-tracing-logging-opentelemetry.md)
 
 ### For Enterprise/Production
 1. **Architecture**: Review [Kubernetes Architecture](docs/03-kubernetes-architecture.md) and [Administration & Security](docs/06-kubernetes-administration-security.md)
@@ -81,6 +83,7 @@ Before starting, ensure you have the required tools installed. See [Prerequisite
 4. **Networking**: Configure [MetalLB load balancing](docs/09-loadbalancing-metallb.md)
 5. **Security**: Implement [WAF protection](docs/10-waf-security.md)
 6. **DevOps**: Establish [GitOps workflow with ArgoCD](docs/11-devops-kubernetes-argocd.md)
+7. **Observability**: Set up [monitoring, tracing, and logging with OpenTelemetry](docs/13-monitoring-tracing-logging-opentelemetry.md)
 
 
 ## License
