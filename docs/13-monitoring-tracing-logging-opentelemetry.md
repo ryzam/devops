@@ -334,9 +334,15 @@ counter.Add(1, new KeyValuePair<string, object?>("method", "GET"));
 ## Best Practices
 
 ### Resource Management
-- Configure appropriate resource limits for observability components
-- Use persistent storage for production deployments
-- Implement data retention policies
+- **Configure resource limits**: Set appropriate CPU and memory limits for observability components to prevent resource starvation of application workloads
+- **Use dedicated node pools**: For larger clusters, consider tainting nodes for monitoring workloads to isolate resource consumption
+- **Optimize data collection**: Implement sampling strategies for tracing (e.g., 10-50% sampling rates) and configure appropriate scrape intervals for metrics
+- **External monitoring alternatives**: For resource-constrained clusters, consider:
+  - Managed cloud services (AWS CloudWatch, GCP Cloud Monitoring, Azure Monitor)
+  - External monitoring clusters dedicated to observability
+  - Lightweight alternatives like kube-prometheus-stack with reduced retention
+- **Use persistent storage**: For production deployments, configure persistent volumes to prevent data loss during pod restarts
+- **Implement data retention policies**: Configure appropriate retention periods to balance observability needs with storage costs
 
 ### Security Considerations
 - Secure access to Grafana and other UIs

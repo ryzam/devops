@@ -54,6 +54,7 @@ Before starting, ensure you have the required tools installed. See [Prerequisite
 
 ### Advanced Topics
 - [High-Availability K8s Cluster with RKE2](docs/08-ha-cluster-rke2.md) - Production HA cluster with RKE2
+- [Backup and Restore RKE2 Clusters](docs/08.1-backup-restore-rke2-cluster.md) - Comprehensive backup and restore procedures
 - [Load Balancing with MetalLB](docs/09-loadbalancing-metallb.md) - Bare-metal load balancing
 - [Securing Applications with a WAF](docs/10-waf-security.md) - Web Application Firewall setup
 
@@ -79,11 +80,12 @@ Before starting, ensure you have the required tools installed. See [Prerequisite
 ### For Enterprise/Production
 1. **Architecture**: Review [Kubernetes Architecture](docs/03-kubernetes-architecture.md) and [Administration & Security](docs/06-kubernetes-administration-security.md)
 2. **High Availability**: Deploy [HA cluster with RKE2](docs/08-ha-cluster-rke2.md)
-3. **Management**: Set up [Rancher for cluster management](docs/07-rancher-management.md)
-4. **Networking**: Configure [MetalLB load balancing](docs/09-loadbalancing-metallb.md)
-5. **Security**: Implement [WAF protection](docs/10-waf-security.md)
-6. **DevOps**: Establish [GitOps workflow with ArgoCD](docs/11-devops-kubernetes-argocd.md)
-7. **Observability**: Set up [monitoring, tracing, and logging with OpenTelemetry](docs/13-monitoring-tracing-logging-opentelemetry.md)
+3. **Backup & Recovery**: Implement [backup and restore procedures](docs/08.1-backup-restore-rke2-cluster.md)
+4. **Management**: Set up [Rancher for cluster management](docs/07-rancher-management.md)
+5. **Networking**: Configure [MetalLB load balancing](docs/09-loadbalancing-metallb.md)
+6. **Security**: Implement [WAF protection](docs/10-waf-security.md)
+7. **DevOps**: Establish [GitOps workflow with ArgoCD](docs/11-devops-kubernetes-argocd.md)
+8. **Observability**: Set up [monitoring, tracing, and logging with OpenTelemetry](docs/13-monitoring-tracing-logging-opentelemetry.md)
 
 
 ## License
