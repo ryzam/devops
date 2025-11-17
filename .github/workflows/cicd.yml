@@ -58,4 +58,4 @@ jobs:
         git push origin main
 
     - name: Print message
-      run: echo "Hello, this is a simple GitHub Action!"
+      run: echo "Hello, this is a simple GitHub Action! Update"
