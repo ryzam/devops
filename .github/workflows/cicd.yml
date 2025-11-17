@@ -17,7 +17,7 @@ jobs:
         dotnet-version: '9.0.x' # Adjust the .NET version as necessary
 
     - name: Change to project directory
-      run: cd docs\excercise\05\pods\dotnetcore-minimal-api
+      run: cd docs/excercise/05/pods/dotnetcore-minimal-api
 
     - name: Checkout code
       uses: actions/checkout@v4
