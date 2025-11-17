@@ -24,11 +24,11 @@ jobs:
       run: |
         cd docs/excercise/05/pods/dotnetcore-minimal-api/
         ls -la
-      working-directory: docs/excercise/05/pods/dotnetcore-minimal-api/
-
+      
     - name: Restore dependencies
       run: dotnet restore docs/excercise/05/pods/dotnetcore-minimal-api/PodInfoApi.csproj
-      
+      working-directory: docs/excercise/05/pods/dotnetcore-minimal-api/
+
     - name: Build project
       run: dotnet build docs/excercise/05/pods/dotnetcore-minimal-api/PodInfoApi.csproj --configuration Release
       
