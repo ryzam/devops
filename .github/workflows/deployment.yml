@@ -1,0 +1,43 @@
+name: CI/CD with Argo CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE: ghcr.io/org/my-app
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t $IMAGE:${GITHUB_SHA::7} .
+          docker push $IMAGE:${GITHUB_SHA::7}
+
+      - name: Update GitOps repo
+        uses: actions/checkout@v3
+        with:
+          repository: org/gitops-repo
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: gitops
+
+      - name: Update kustomize image tag
+        run: |
+          cd gitops/apps/my-app
+          yq e -i '.images[0].newTag = "'${GITHUB_SHA::7}'"' kustomization.yaml
+          git config user.email "ci@example.com"
+          git config user.name "github-actions"
+          git add .
+          git commit -m "ci: update image tag ${GITHUB_SHA::7}"
+          git push
