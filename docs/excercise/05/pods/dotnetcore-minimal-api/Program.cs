@@ -23,6 +23,7 @@ app.MapGet("/info", () =>
 {
     var podInfo = new
     {
+        environment = Environment.GetEnvironmentVariable("APP_TITTLE") ?? "DotNetCore Minimal API",
         instanceId = instanceId,
         podName = podName,
         nodeName = nodeName,

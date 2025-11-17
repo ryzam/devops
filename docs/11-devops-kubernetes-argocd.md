@@ -188,6 +188,69 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 # Access: https://localhost:8080
 ```
 
+## Option: SSL Termination at Ingress Controller¶
+An alternative approach is to perform the SSL termination at the Ingress. Since an ingress-nginx Ingress supports only a single protocol per Ingress object, two Ingress objects need to be defined using the nginx.ingress.kubernetes.io/backend-protocol annotation, one for HTTP/HTTPS and the other for gRPC.
+
+Each ingress will be for a different domain (argocd.example.com and grpc.argocd.example.com). This requires that the Ingress resources use different TLS secretNames to avoid unexpected behavior.
+
+```bash
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-server-http-ingress
+  namespace: argocd
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: argocd-server
+            port:
+              name: http
+    host: argocd.example.com
+  tls:
+  - hosts:
+    - argocd.example.com
+    secretName: argocd-ingress-http
+```
+
+gRPC ingress:
+
+```bash
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-server-grpc-ingress
+  namespace: argocd
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: argocd-server
+            port:
+              name: https
+    host: grpc.argocd.example.com
+  tls:
+  - hosts:
+    - grpc.argocd.example.com
+    secretName: argocd-ingress-grpc
+```
+
+
 3. **Login and Change Password:**
 - Username: admin
 - Password: (from above command)
