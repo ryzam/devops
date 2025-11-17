@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     env:
       IMAGE: docker.io/irwanazam/podinfo-api
@@ -17,7 +17,7 @@ jobs:
         dotnet-version: '9.0.x' # Adjust the .NET version as necessary
 
     - name: Checkout code
-      uses: cd ../docs/excercise/05/pods/dotnetcore-minimal-api/
+      run: cd ../docs/excercise/05/pods/dotnetcore-minimal-api/
 
     - name: Restore dependencies
       run: dotnet restore PodInfoApi.csproj
