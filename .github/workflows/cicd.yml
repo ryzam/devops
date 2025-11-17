@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       IMAGE: docker.io/irwanazam/podinfo-api
-      PATH: docs/excercise/05/pods/dotnetcore-minimal-api/
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
