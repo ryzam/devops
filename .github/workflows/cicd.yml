@@ -27,7 +27,6 @@ jobs:
       
     - name: Restore dependencies
       run: dotnet restore docs/excercise/05/pods/dotnetcore-minimal-api/PodInfoApi.csproj
-      working-directory: docs/excercise/05/pods/dotnetcore-minimal-api/
 
     - name: Build project
       run: dotnet build docs/excercise/05/pods/dotnetcore-minimal-api/PodInfoApi.csproj --configuration Release
@@ -35,6 +34,7 @@ jobs:
     - name: Build Docker image
       run: |
         TAG=${GITHUB_SHA::7}  
+        cd docs/excercise/05/pods/dotnetcore-minimal-api/
         docker build -t $IMAGE:$TAG .
       
     - name: Log in to Docker Hub
@@ -48,7 +48,7 @@ jobs:
     needs: build
 
     steps:
-    - name: Update Kubernetes manifests
+    - name: Update Kubernetes manifests with new image tag
       run: |
         sed -i 's|image: .*$|image: ${{ secrets.DOCKER_USERNAME }}/$IMAGE:$TAG|' deployment-action/deployment.yaml
         git config --global user.name "github-actions[bot]"
