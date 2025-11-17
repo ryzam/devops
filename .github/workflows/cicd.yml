@@ -11,6 +11,9 @@ jobs:
     env:
       IMAGE: docker.io/irwanazam/podinfo-api
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
     - name: Set up .NET
       uses: actions/setup-dotnet@v4
       with:
@@ -18,9 +21,6 @@ jobs:
 
     - name: Change to project directory
       run: cd docs/excercise/05/pods/dotnetcore-minimal-api
-
-    - name: Checkout code
-      uses: actions/checkout@v4
 
     - name: Restore dependencies
       run: dotnet restore PodInfoApi.csproj
