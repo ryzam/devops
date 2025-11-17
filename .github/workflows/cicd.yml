@@ -9,35 +9,46 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     env:
-      IMAGE: ghcr.io/org/my-app
+      IMAGE: docker.io/irwanazam/podinfo-api
     steps:
-      - uses: actions/checkout@v3
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x' # Adjust the .NET version as necessary
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Checkout code
+      uses: cd ../docs/excercise/05/pods/dotnetcore-minimal-api/
 
-      - name: Build and Push Docker Image
-        run: |
-          docker build -t $IMAGE:${GITHUB_SHA::7} .
-          docker push $IMAGE:${GITHUB_SHA::7}
+    - name: Restore dependencies
+      run: dotnet restore PodInfoApi.csproj
+      
+    - name: Build project
+      run: dotnet build PodInfoApi.csproj --configuration Release
+      
+    - name: Build Docker image
+      run: |
+        TAG=${GITHUB_SHA::7}  
+        docker build -t $IMAGE:$TAG .
+      
+    - name: Log in to Docker Hub
+      run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
 
-      - name: Update GitOps repo
-        uses: actions/checkout@v3
-        with:
-          repository: org/gitops-repo
-          token: ${{ secrets.GITHUB_TOKEN }}
-          path: gitops
+    - name: Push Docker image
+      run: docker push ${{ secrets.DOCKER_USERNAME }}/$IMAGES:$TAG
 
-      - name: Update kustomize image tag
-        run: |
-          cd gitops/apps/my-app
-          yq e -i '.images[0].newTag = "'${GITHUB_SHA::7}'"' kustomization.yaml
-          git config user.email "ci@example.com"
-          git config user.name "github-actions"
-          git add .
-          git commit -m "ci: update image tag ${GITHUB_SHA::7}"
-          git push
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+    - name: Update Kubernetes manifests
+      run: |
+        sed -i 's|image: .*$|image: ${{ secrets.DOCKER_USERNAME }}/$IMAGE:$TAG|' deployment-action/deployment.yaml
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add deployment-action/deployment.yaml
+        git commit -m "Update image to ${{ secrets.DOCKER_USERNAME }}/$IMAGE:$TAG"
+        git push origin main
+
+    - name: Print message
+      run: echo "Hello, this is a simple GitHub Action!"

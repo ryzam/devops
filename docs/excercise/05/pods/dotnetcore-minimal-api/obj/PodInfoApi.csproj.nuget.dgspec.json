@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\user\\Training\\complete-k8s\\docs\\excercise\\04\\dotnetcore-minimal-api\\PodInfoApi.csproj": {}
+    "C:\\Users\\user\\Training\\complete-k8s\\docs\\excercise\\05\\pods\\dotnetcore-minimal-api\\PodInfoApi.csproj": {}
   },
   "projects": {
-    "C:\\Users\\user\\Training\\complete-k8s\\docs\\excercise\\04\\dotnetcore-minimal-api\\PodInfoApi.csproj": {
+    "C:\\Users\\user\\Training\\complete-k8s\\docs\\excercise\\05\\pods\\dotnetcore-minimal-api\\PodInfoApi.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\user\\Training\\complete-k8s\\docs\\excercise\\04\\dotnetcore-minimal-api\\PodInfoApi.csproj",
+        "projectUniqueName": "C:\\Users\\user\\Training\\complete-k8s\\docs\\excercise\\05\\pods\\dotnetcore-minimal-api\\PodInfoApi.csproj",
         "projectName": "PodInfoApi",
-        "projectPath": "C:\\Users\\user\\Training\\complete-k8s\\docs\\excercise\\04\\dotnetcore-minimal-api\\PodInfoApi.csproj",
+        "projectPath": "C:\\Users\\user\\Training\\complete-k8s\\docs\\excercise\\05\\pods\\dotnetcore-minimal-api\\PodInfoApi.csproj",
         "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\user\\Training\\complete-k8s\\docs\\excercise\\04\\dotnetcore-minimal-api\\obj\\",
+        "outputPath": "C:\\Users\\user\\Training\\complete-k8s\\docs\\excercise\\05\\pods\\dotnetcore-minimal-api\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

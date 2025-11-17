@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "2h42ib0dW1U=",
+  "dgSpecHash": "QQkTqHAeJCc=",
   "success": true,
-  "projectFilePath": "C:\\Users\\user\\Training\\complete-k8s\\docs\\excercise\\04\\dotnetcore-minimal-api\\PodInfoApi.csproj",
+  "projectFilePath": "C:\\Users\\user\\Training\\complete-k8s\\docs\\excercise\\05\\pods\\dotnetcore-minimal-api\\PodInfoApi.csproj",
   "expectedPackageFiles": [],
   "logs": []
 }
