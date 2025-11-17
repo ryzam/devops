@@ -9,7 +9,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      IMAGES: docker.io/${{secrets.DOCKER_USERNAME}}/podinfo-api
+      IMAGE: docker.io/${{secrets.DOCKER_USERNAME}}/podinfo-api
 
     steps:
     - name: Checkout code
@@ -35,7 +35,7 @@ jobs:
       run: |
         TAG=${GITHUB_SHA::7}  
         cd docs/excercise/05/pods/dotnetcore-minimal-api/
-        docker build -t $IMAGES:$TAG .
+        docker build -t $IMAGE:$TAG .
       
     - name: Log in to Docker Hub
       run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
@@ -43,7 +43,7 @@ jobs:
     - name: Push Docker image
       run: |
         TAG=${GITHUB_SHA::7}
-        docker push $IMAGES:$TAG
+        docker push $IMAGE:$TAG
 
   deploy:
     runs-on: ubuntu-latest
@@ -54,12 +54,13 @@ jobs:
       run: |
         cd docs/excercise/05/pods/dotnetcore-minimal-api/
         pwd
-        sed -i 's|image: .*$|image: $IMAGES:$TAG|' deployment-action/deployment.yaml
+        sed -i 's|image: .*$|image: $IMAGE:$TAG|' deployment-action/deployment.yaml
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         git add deployment-action/deployment.yaml
         git commit -m "Update image to $IMAGE:$TAG"
         git push origin main
-
+      working-directory: docs/excercise/05/pods/dotnetcore-minimal-api/
+      
     - name: Print message
       run: echo "Hello, this is a simple GitHub Action! Update"
