@@ -54,6 +54,7 @@ jobs:
       run: |
         TAG=${GITHUB_SHA::7}
         cd docs/excercise/05/pods/dotnetcore-minimal-api/
+        pwd
         sed -i 's|image: .*$|image: $IMAGES:$TAG|' deployment-action/deployment.yaml
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
