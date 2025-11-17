@@ -25,10 +25,10 @@ jobs:
         ls -la
 
     - name: Restore dependencies
-      run: dotnet restore PodInfoApi.csproj
+      run: dotnet restore docs/excercise/05/pods/dotnetcore-minimal-api/PodInfoApi.csproj
       
     - name: Build project
-      run: dotnet build PodInfoApi.csproj --configuration Release
+      run: dotnet build docs/excercise/05/pods/dotnetcore-minimal-api/PodInfoApi.csproj --configuration Release
       
     - name: Build Docker image
       run: |
