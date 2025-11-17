@@ -1,0 +1,7 @@
+resources:
+  - deployment.yaml
+  - service.yaml
+
+images:
+  - name: irwanazam/podinfo-api
+    newTag: "latest"
