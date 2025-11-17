@@ -52,7 +52,6 @@ jobs:
     steps:
     - name: Update Kubernetes manifests with new image tag
       run: |
-        TAG=${GITHUB_SHA::7}
         cd docs/excercise/05/pods/dotnetcore-minimal-api/
         pwd
         sed -i 's|image: .*$|image: $IMAGES:$TAG|' deployment-action/deployment.yaml
