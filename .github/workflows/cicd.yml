@@ -9,7 +9,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      IMAGE: docker.io/${{secrets.DOCKER_USERNAME}}/podinfo-api
+      IMAGES: docker.io/${{secrets.DOCKER_USERNAME}}/podinfo-api
 
     steps:
     - name: Checkout code
@@ -35,13 +35,15 @@ jobs:
       run: |
         TAG=${GITHUB_SHA::7}  
         cd docs/excercise/05/pods/dotnetcore-minimal-api/
-        docker build -t $IMAGE:$TAG .
+        docker build -t $IMAGES:$TAG .
       
     - name: Log in to Docker Hub
       run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
 
     - name: Push Docker image
-      run: docker push $IMAGES:$TAG
+      run: |
+        TAG=${GITHUB_SHA::7}
+        docker push $IMAGES:$TAG
 
   deploy:
     runs-on: ubuntu-latest
@@ -50,11 +52,11 @@ jobs:
     steps:
     - name: Update Kubernetes manifests with new image tag
       run: |
-        sed -i 's|image: .*$|image: ${{ secrets.DOCKER_USERNAME }}/$IMAGE:$TAG|' deployment-action/deployment.yaml
+        sed -i 's|image: .*$|image: $IMAGES:$TAG|' deployment-action/deployment.yaml
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         git add deployment-action/deployment.yaml
-        git commit -m "Update image to ${{ secrets.DOCKER_USERNAME }}/$IMAGE:$TAG"
+        git commit -m "Update image to $IMAGE:$TAG"
         git push origin main
 
     - name: Print message
