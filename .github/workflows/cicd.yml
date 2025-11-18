@@ -50,6 +50,9 @@ jobs:
     needs: build
 
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
     - name: Update Kubernetes manifests with new image tag
       run: |
         cd docs/excercise/05/pods/dotnetcore-minimal-api/
