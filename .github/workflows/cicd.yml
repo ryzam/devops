@@ -63,7 +63,11 @@ jobs:
     - name: Update Kubernetes manifests with new image tag
       working-directory: ${{ env.WORKING_DIR }}
       run: |
-        sed -i 's|image: .*|image: '"$IMAGE:$TAG"'|' deployment-action/deployment.yaml
+        IMAGE="${{ needs.build.outputs.image }}"
+        TAG="${{ needs.build.outputs.tag }}"
+        echo "Updating image to: $IMAGE:$TAG"
+        sed -i "s|image: .*|image: $IMAGE:$TAG|" deployment-action/deployment.yaml
+        cat deployment-action/deployment.yaml
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         git remote set-url origin https://x-access-token:${{ github.token }}@github.com/ryzam/devops.git
@@ -72,4 +76,4 @@ jobs:
         git push origin main
 
     - name: Print message
-      run: echo "Deployed $IMAGE:$TAG successfully!"
+      run: echo "Deployed ${{ needs.build.outputs.image }}:${{ needs.build.outputs.tag }} successfully!"

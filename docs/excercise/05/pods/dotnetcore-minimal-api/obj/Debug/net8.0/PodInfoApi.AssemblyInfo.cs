@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PodInfoApi")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b642fec0ac3339563794cce71e6c8e56ac0d71c7")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2be584a238ec7783209e738acdd0417226ec219e")]
 [assembly: System.Reflection.AssemblyProductAttribute("PodInfoApi")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PodInfoApi")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

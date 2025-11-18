@@ -19,6 +19,7 @@ var namespaceName = Environment.GetEnvironmentVariable("NAMESPACE") ?? "default"
 // Generate a unique instance ID for this pod
 var instanceId = Guid.NewGuid().ToString().Substring(0, 8);
 
+
 app.MapGet("/info", () =>
 {
     var podInfo = new
@@ -34,8 +35,17 @@ app.MapGet("/info", () =>
         processId = Environment.ProcessId,
         dotnetVersion = Environment.Version.ToString()
     };
-
     return Results.Json(podInfo);
+});
+
+// New endpoint: /save?data=yourtext
+app.MapGet("/save", (string data) =>
+{
+    var dirPath = "public";
+    Directory.CreateDirectory(dirPath);
+    var filePath = Path.Combine(dirPath, "saved_data.txt");
+    File.AppendAllText(filePath, $"{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss UTC}: {data}\n");
+    return Results.Ok($"Saved: {data}");
 });
 
 app.MapGet("/health", () => Results.Ok("Healthy"));
