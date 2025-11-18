@@ -9,7 +9,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      IMAGE: docker.io/${{secrets.DOCKER_USERNAME}}/podinfo-api
+      IMAGE: docker.io/${{ secrets.DOCKER_USERNAME }}/podinfo-api
+      WORKING_DIR: docs/excercise/05/pods/dotnetcore-minimal-api
+    
+    outputs:
+      image: ${{ steps.build-image.outputs.image }}
+      tag: ${{ steps.build-image.outputs.tag }}
 
     steps:
     - name: Checkout code
@@ -18,45 +23,46 @@ jobs:
     - name: Set up .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '9.0.x' # Adjust the .NET version as necessary
-
-    - name: Change to project directory
-      run: |
-        cd docs/excercise/05/pods/dotnetcore-minimal-api/
-        ls -la
+        dotnet-version: '9.0.x'
       
     - name: Restore dependencies
-      run: dotnet restore docs/excercise/05/pods/dotnetcore-minimal-api/PodInfoApi.csproj
+      working-directory: ${{ env.WORKING_DIR }}
+      run: dotnet restore PodInfoApi.csproj
 
     - name: Build project
-      run: dotnet build docs/excercise/05/pods/dotnetcore-minimal-api/PodInfoApi.csproj --configuration Release
+      working-directory: ${{ env.WORKING_DIR }}
+      run: dotnet build PodInfoApi.csproj --configuration Release
       
     - name: Build Docker image
+      id: build-image
+      working-directory: ${{ env.WORKING_DIR }}
       run: |
-        TAG=${GITHUB_SHA::7}  
-        cd docs/excercise/05/pods/dotnetcore-minimal-api/
+        TAG=${GITHUB_SHA::7}
         docker build -t $IMAGE:$TAG .
+        echo "image=$IMAGE" >> $GITHUB_OUTPUT
+        echo "tag=$TAG" >> $GITHUB_OUTPUT
       
     - name: Log in to Docker Hub
       run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
 
     - name: Push Docker image
-      run: |
-        TAG=${GITHUB_SHA::7}
-        docker push $IMAGE:$TAG
+      run: docker push ${{ steps.build-image.outputs.image }}:${{ steps.build-image.outputs.tag }}
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
+    env:
+      IMAGE: ${{ needs.build.outputs.image }}
+      TAG: ${{ needs.build.outputs.tag }}
+      WORKING_DIR: docs/excercise/05/pods/dotnetcore-minimal-api
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
     - name: Update Kubernetes manifests with new image tag
+      working-directory: ${{ env.WORKING_DIR }}
       run: |
-        cd docs/excercise/05/pods/dotnetcore-minimal-api/
-        ls -la
         sed -i 's|image: .*|image: '"$IMAGE:$TAG"'|' deployment-action/deployment.yaml
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
@@ -64,7 +70,6 @@ jobs:
         git add deployment-action/deployment.yaml
         git commit -m "Update image to $IMAGE:$TAG"
         git push origin main
-      #working-directory: docs/excercise/05/pods/dotnetcore-minimal-api/
 
     - name: Print message
-      run: echo "Hello, this is a simple GitHub Action! Update"
+      run: echo "Deployed $IMAGE:$TAG successfully!"
