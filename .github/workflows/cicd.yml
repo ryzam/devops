@@ -52,7 +52,7 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Update Kubernetes manifests with new image tag
       run: |
         cd docs/excercise/05/pods/dotnetcore-minimal-api/
@@ -60,6 +60,7 @@ jobs:
         sed -i 's|image: .*$|image: $IMAGE:$TAG|' deployment-action/deployment.yaml
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git remote set-url origin https://x-access-token:${{ secrets.REPO_TOKEN }}@github.com/ryzam/devops.git
         git add deployment-action/deployment.yaml
         git commit -m "Update image to $IMAGE:$TAG"
         git push origin main
