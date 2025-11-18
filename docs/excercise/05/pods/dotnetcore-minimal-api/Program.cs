@@ -48,7 +48,7 @@ app.MapGet("/save", (string data) =>
     return Results.Ok($"Saved: {data}");
 });
 
-app.MapGet("/health", () => Results.Ok("Healthy"));
+app.MapGet("/health", () => Results.Ok("Healthy Pods"));
 
 app.MapGet("/", () => Results.Ok($"Pod Load Balancer Demo API - Instance {instanceId} {nodeName}"));
 

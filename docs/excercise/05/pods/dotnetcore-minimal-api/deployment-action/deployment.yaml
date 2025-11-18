@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: podinfo-api
-        image: :2be584a
+        image: irwanazam/podinfo-api:v1.2
         ports:
         - containerPort: 8081
           name: http
